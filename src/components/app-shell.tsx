@@ -20,7 +20,7 @@ const adminNavigation = [
 
 const teacherNavigation = [
   ["overview", "Today", "/", "T"],
-  ["lessons", "My lessons", "#", "L"],
+  ["lessons", "My lessons", "/teacher/lessons", "L"],
   ["curriculum", "Curriculum", "#", "C"],
   ["library", "Lesson library", "#", "B"],
 ] as const;
