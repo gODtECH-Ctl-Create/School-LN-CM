@@ -30,10 +30,7 @@ async function loadLessons(
   schoolId: string,
 ) {
   const [{ data: assignments }, { data: notes }] = await Promise.all([
-    supabase
-      .from("teacher_assignments")
-      .select("class_id, subject_id, academic_session_id")
-      .eq("membership_id", membershipId),
+    supabase.from("teacher_assignments").select("class_id, subject_id, academic_session_id").eq("membership_id", membershipId),
     supabase
       .from("lesson_notes")
       .select("id, curriculum_id, curriculum_unit_id, curriculum_topic_id, academic_session_id, term_id, class_id, subject_id, title, duration_minutes, learning_objectives, lesson_introduction, lesson_content, teacher_activities, learner_activities, assessment, homework, materials, status, created_at, updated_at")
@@ -42,22 +39,78 @@ async function loadLessons(
       .order("updated_at", { ascending: false }),
   ]);
 
-  const classIds = [...new Set((assignments ?? []).map((item) => item.class_id))];
-  const subjectIds = [...new Set((assignments ?? []).map((item) => item.subject_id))];
-  const sessionIds = [...new Set((assignments ?? []).map((item) => item.academic_session_id))];
-  const noteClassIds = [...new Set((notes ?? []).map((item) => item.class_id))];
-  const noteSubjectIds = [...new Set((notes ?? []).map((item) => item.subject_id))];
-  const noteSessionIds = [...new Set((notes ?? []).map((item) => item.academic_session_id))];
-  const termIds = [...new Set((notes ?? []).map((item) => item.term_id))];
+  const classIds = [...new Set([...(assignments ?? []).map((item) => item.class_id), ...(notes ?? []).map((item) => item.class_id)])];
+  const subjectIds = [...new Set([...(assignments ?? []).map((item) => item.subject_id), ...(notes ?? []).map((item) => item.subject_id)])];
+  const sessionIds = [...new Set([...(assignments ?? []).map((item) => item.academic_session_id), ...(notes ?? []).map((item) => item.academic_session_id)])];
+  const noteTermIds = [...new Set((notes ?? []).map((item) => item.term_id))];
 
-  const [{ data: classes }, { data: subjects }, { data: sessions }, { data: terms }, { data: topics }, { data: schools }] = await Promise.all([
-    supabase.from("classes").select("id, name, level").in("id", [...new Set([...classIds, ...noteClassIds])]),
-    supabase.from("subjects").select("id, name, code").in("id", [...new Set([...subjectIds, ...noteSubjectIds])]),
-    supabase.from("academic_sessions").select("id, name, is_current").in("id", [...new Set([...sessionIds, ...noteSessionIds])]),
-    termIds.length ? supabase.from("terms").select("id, academic_session_id, name, term_number, is_current").in("id", termIds) : Promise.resolve({ data: [] }),
-    supabase.from("curriculum_topics").select("id, unit_id, title, week_number, lesson_count").in("id", (notes ?? []).map((item) => item.curriculum_topic_id).filter(Boolean) as string[]),
+  const [{ data: classes }, { data: subjects }, { data: sessions }, { data: terms }, { data: schools }, { data: curricula }] = await Promise.all([
+    classIds.length ? supabase.from("classes").select("id, name, level").in("id", classIds).order("name") : Promise.resolve({ data: [] }),
+    subjectIds.length ? supabase.from("subjects").select("id, name, code").in("id", subjectIds).order("name") : Promise.resolve({ data: [] }),
+    sessionIds.length ? supabase.from("academic_sessions").select("id, name, is_current").in("id", sessionIds).order("starts_on", { ascending: false }) : Promise.resolve({ data: [] }),
+    noteTermIds.length ? supabase.from("terms").select("id, academic_session_id, name, term_number, is_current").in("id", noteTermIds) : Promise.resolve({ data: [] }),
     supabase.from("schools").select("id, name, code").eq("id", schoolId).maybeSingle(),
+    supabase.from("curricula").select("id, academic_session_id, term_id, class_id, subject_id").eq("school_id", schoolId).eq("status", "published"),
   ]);
+
+  const assignedCurricula = (curricula ?? []).filter((curriculum) =>
+    (assignments ?? []).some(
+      (assignment) =>
+        assignment.academic_session_id === curriculum.academic_session_id &&
+        assignment.class_id === curriculum.class_id &&
+        assignment.subject_id === curriculum.subject_id,
+    ),
+  );
+  const curriculumIds = assignedCurricula.map((curriculum) => curriculum.id);
+  const { data: units } = curriculumIds.length
+    ? await supabase.from("curriculum_units").select("id, curriculum_id, title, unit_number, sort_order").in("curriculum_id", curriculumIds).order("sort_order")
+    : { data: [] as { id: string; curriculum_id: string; title: string; unit_number: number; sort_order: number }[] };
+  const unitIds = (units ?? []).map((unit) => unit.id);
+  const { data: curriculumTopics } = unitIds.length
+    ? await supabase.from("curriculum_topics").select("id, unit_id, title, week_number, lesson_count, sort_order").in("unit_id", unitIds).order("sort_order")
+    : { data: [] as { id: string; unit_id: string; title: string; week_number: number | null; lesson_count: number; sort_order: number }[] };
+
+  const curriculumById = new Map(assignedCurricula.map((curriculum) => [curriculum.id, curriculum]));
+  const unitById = new Map((units ?? []).map((unit) => [unit.id, unit]));
+  const topics = (curriculumTopics ?? []).map((topic) => {
+    const unit = unitById.get(topic.unit_id);
+    const curriculum = unit ? curriculumById.get(unit.curriculum_id) : undefined;
+    return curriculum
+      ? {
+          id: topic.id,
+          unit_id: topic.unit_id,
+          curriculum_id: curriculum.id,
+          title: topic.title,
+          week_number: topic.week_number,
+          lesson_count: topic.lesson_count,
+          academic_session_id: curriculum.academic_session_id,
+          term_id: curriculum.term_id,
+          class_id: curriculum.class_id,
+          subject_id: curriculum.subject_id,
+        }
+      : null;
+  }).filter(Boolean);
+
+  const existingNoteTopicIds = new Set((notes ?? []).map((note) => note.curriculum_topic_id).filter(Boolean));
+  if (existingNoteTopicIds.size) {
+    const missingIds = [...existingNoteTopicIds].filter((id) => !topics.some((topic) => topic?.id === id));
+    if (missingIds.length) {
+      const { data: linkedTopics } = await supabase.from("curriculum_topics").select("id, unit_id, title, week_number, lesson_count").in("id", missingIds);
+      const linkedUnitIds = (linkedTopics ?? []).map((topic) => topic.unit_id);
+      const { data: linkedUnits } = linkedUnitIds.length ? await supabase.from("curriculum_units").select("id, curriculum_id, title, unit_number").in("id", linkedUnitIds) : { data: [] };
+      const linkedUnitById = new Map((linkedUnits ?? []).map((unit) => [unit.id, unit]));
+      const linkedCurriculumIds = [...new Set((linkedUnits ?? []).map((unit) => unit.curriculum_id))];
+      const { data: linkedCurricula } = linkedCurriculumIds.length ? await supabase.from("curricula").select("id, academic_session_id, term_id, class_id, subject_id").in("id", linkedCurriculumIds) : { data: [] };
+      const linkedCurriculumById = new Map((linkedCurricula ?? []).map((curriculum) => [curriculum.id, curriculum]));
+      for (const topic of linkedTopics ?? []) {
+        const unit = linkedUnitById.get(topic.unit_id);
+        const curriculum = unit ? linkedCurriculumById.get(unit.curriculum_id) : undefined;
+        if (unit && curriculum && curriculumIds.includes(curriculum.id)) {
+          topics.push({ id: topic.id, unit_id: topic.unit_id, curriculum_id: curriculum.id, title: topic.title, week_number: topic.week_number, lesson_count: topic.lesson_count, academic_session_id: curriculum.academic_session_id, term_id: curriculum.term_id, class_id: curriculum.class_id, subject_id: curriculum.subject_id });
+        }
+      }
+    }
+  }
 
   return {
     school: schools,
@@ -66,7 +119,7 @@ async function loadLessons(
     subjects: subjects ?? [],
     sessions: sessions ?? [],
     terms: terms ?? [],
-    topics: topics ?? [],
+    topics,
     notes: notes ?? [],
   };
 }
@@ -128,18 +181,10 @@ export async function POST(request: NextRequest) {
 
       if (action === "publish") {
         if (!existing.lesson_content?.trim()) return jsonError("Add lesson content before publishing the note.", 409);
-        const { error: updateError } = await supabase
-          .from("lesson_notes")
-          .update({ status: "published", updated_at: new Date().toISOString() })
-          .eq("id", existing.id)
-          .eq("teacher_membership_id", membership.id);
+        const { error: updateError } = await supabase.from("lesson_notes").update({ status: "published", updated_at: new Date().toISOString() }).eq("id", existing.id).eq("teacher_membership_id", membership.id);
         if (updateError) return jsonError("Unable to publish lesson note.", 409);
       } else {
-        const { error: updateError } = await supabase
-          .from("lesson_notes")
-          .update({ status: "archived", updated_at: new Date().toISOString() })
-          .eq("id", existing.id)
-          .eq("teacher_membership_id", membership.id);
+        const { error: updateError } = await supabase.from("lesson_notes").update({ status: "archived", updated_at: new Date().toISOString() }).eq("id", existing.id).eq("teacher_membership_id", membership.id);
         if (updateError) return jsonError("Unable to archive lesson note.", 409);
       }
       return NextResponse.json({ ok: true, ...(await loadLessons(supabase, membership.id, membership.school_id)) });
@@ -160,41 +205,45 @@ export async function POST(request: NextRequest) {
       .eq("class_id", body.classId)
       .eq("subject_id", body.subjectId)
       .maybeSingle();
-
     if (!assignment) return jsonError("That class and subject are not assigned to you for this academic session.", 403);
 
-    const { data: term } = await supabase
-      .from("terms")
-      .select("id")
-      .eq("id", body.termId)
-      .eq("academic_session_id", body.academicSessionId)
-      .maybeSingle();
+    const { data: term } = await supabase.from("terms").select("id").eq("id", body.termId).eq("academic_session_id", body.academicSessionId).maybeSingle();
     if (!term) return jsonError("The selected term does not belong to this academic session.", 400);
 
+    let curriculumId = body.curriculumId ?? null;
+    let curriculumUnitId = body.curriculumUnitId ?? null;
+
     if (body.curriculumTopicId) {
-      const { data: topic } = await supabase
-        .from("curriculum_topics")
-        .select("id, unit_id, curriculum_id")
-        .eq("id", body.curriculumTopicId)
-        .maybeSingle();
+      const { data: topic } = await supabase.from("curriculum_topics").select("id, unit_id, curriculum_id").eq("id", body.curriculumTopicId).maybeSingle();
       if (!topic) return jsonError("Selected curriculum topic was not found.", 400);
 
       const { data: curriculum } = await supabase
         .from("curricula")
-        .select("id, school_id, academic_session_id, term_id, class_id, subject_id")
+        .select("id, school_id, academic_session_id, term_id, class_id, subject_id, status")
         .eq("id", topic.curriculum_id)
         .eq("school_id", membership.school_id)
         .maybeSingle();
-      if (!curriculum || curriculum.academic_session_id !== body.academicSessionId || curriculum.term_id !== body.termId || curriculum.class_id !== body.classId || curriculum.subject_id !== body.subjectId) {
-        return jsonError("The curriculum topic does not match this lesson context.", 400);
-      }
+      if (!curriculum || curriculum.status !== "published") return jsonError("Only a published curriculum topic can be linked to a lesson.", 400);
+      if (curriculum.academic_session_id !== body.academicSessionId || curriculum.term_id !== body.termId || curriculum.class_id !== body.classId || curriculum.subject_id !== body.subjectId) return jsonError("The curriculum topic does not match this lesson context.", 400);
+
+      curriculumId = curriculum.id;
+      curriculumUnitId = topic.unit_id;
+    } else if (curriculumId) {
+      const { data: curriculum } = await supabase
+        .from("curricula")
+        .select("id, school_id, academic_session_id, term_id, class_id, subject_id, status")
+        .eq("id", curriculumId)
+        .eq("school_id", membership.school_id)
+        .maybeSingle();
+      if (!curriculum || curriculum.status !== "published") return jsonError("The selected curriculum is not available for lesson linking.", 400);
+      if (curriculum.academic_session_id !== body.academicSessionId || curriculum.term_id !== body.termId || curriculum.class_id !== body.classId || curriculum.subject_id !== body.subjectId) return jsonError("The curriculum does not match this lesson context.", 400);
     }
 
     const payload = {
       school_id: membership.school_id,
       teacher_membership_id: membership.id,
-      curriculum_id: body.curriculumId ?? null,
-      curriculum_unit_id: body.curriculumUnitId ?? null,
+      curriculum_id: curriculumId,
+      curriculum_unit_id: curriculumUnitId,
       curriculum_topic_id: body.curriculumTopicId ?? null,
       academic_session_id: body.academicSessionId,
       term_id: body.termId,
@@ -215,12 +264,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "update") {
       if (!body.lessonId) return jsonError("Lesson note is required.");
-      const { error } = await supabase
-        .from("lesson_notes")
-        .update(payload)
-        .eq("id", body.lessonId)
-        .eq("school_id", membership.school_id)
-        .eq("teacher_membership_id", membership.id);
+      const { error } = await supabase.from("lesson_notes").update(payload).eq("id", body.lessonId).eq("school_id", membership.school_id).eq("teacher_membership_id", membership.id);
       if (error) return jsonError("Unable to update lesson note.", 409);
     } else {
       const { error } = await supabase.from("lesson_notes").insert(payload);
