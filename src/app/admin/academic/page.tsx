@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/src/components/app-shell";
 import AcademicSetupClient, { type AcademicData } from "./academic-setup-client";
+import "./academic.module.css";
 import { createClient } from "@/src/lib/supabase/server";
 
 export default async function AcademicSetupPage() {
