@@ -21,7 +21,7 @@ const adminNavigation = [
 const teacherNavigation = [
   ["overview", "Today", "/", "T"],
   ["lessons", "My lessons", "/teacher/lessons", "L"],
-  ["curriculum", "Curriculum", "#", "C"],
+  ["curriculum", "Curriculum", "/teacher/curriculum", "C"],
   ["library", "Lesson library", "#", "B"],
 ] as const;
 
@@ -40,13 +40,11 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
             <small>Learning & curriculum</small>
           </span>
         </Link>
-
         <div className="school-context">
           <span className="school-context-label">School</span>
           <strong>{schoolName}</strong>
           <span>{schoolCode}</span>
         </div>
-
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
           {navigation.map(([key, label, href, mark]) => {
@@ -66,30 +64,13 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
             );
           })}
         </nav>
-
         <div className="sidebar-footer">
-          <span className="nav-item is-disabled" aria-disabled="true">
-            <span className="nav-icon" aria-hidden="true">?</span>
-            Help & support
-          </span>
-          <div className="user-chip">
-            <span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
-            <span>
-              <strong>{displayName}</strong>
-              <small>{isAdmin ? "Administrator" : "Teacher"}</small>
-            </span>
-          </div>
+          <span className="nav-item is-disabled" aria-disabled="true"><span className="nav-icon" aria-hidden="true">?</span>Help & support</span>
+          <div className="user-chip"><span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span><span><strong>{displayName}</strong><small>{isAdmin ? "Administrator" : "Teacher"}</small></span></div>
         </div>
       </aside>
-
       <main className="app-content">
-        <header className="mobile-topbar">
-          <Link href="/" className="mobile-brand">
-            <span className="brand-mark brand-mark-small">SL</span>
-            <strong>School LN CM</strong>
-          </Link>
-          <span className="mobile-school-code">{schoolCode}</span>
-        </header>
+        <header className="mobile-topbar"><Link href="/" className="mobile-brand"><span className="brand-mark brand-mark-small">SL</span><strong>School LN CM</strong></Link><span className="mobile-school-code">{schoolCode}</span></header>
         {children}
       </main>
     </div>
