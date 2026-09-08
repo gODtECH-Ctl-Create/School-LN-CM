@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#152033">
+  <title>School LN CM · UI Preview</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="preview-bar">
+    <div>
+      <strong>School LN CM</strong>
+      <span>Static UI preview · FSIS</span>
+    </div>
+    <nav aria-label="Preview screens">
+      <button class="screen-tab active" data-screen="login">Login</button>
+      <button class="screen-tab" data-screen="admin">Admin</button>
+      <button class="screen-tab" data-screen="staff">Staff</button>
+      <button class="screen-tab" data-screen="teacher">Teacher</button>
+    </nav>
+  </header>
+
+  <main class="preview-stage">
+    <section class="screen active" id="screen-login" aria-labelledby="login-heading">
+      <div class="login-card">
+        <div class="brand-mark" aria-hidden="true">SL</div>
+        <p class="eyebrow">SCHOOL LN CM</p>
+        <h1 id="login-heading">Welcome back.</h1>
+        <p class="muted">Sign in to continue your school's teaching and curriculum workspace.</p>
+        <div class="context-strip"><span class="context-chip"><b>FSIS</b> Future Speakers International School</span></div>
+        <div class="form">
+          <label>Email address<input type="email" placeholder="you@example.com"></label>
+          <label>Password<input type="password" placeholder="Your password"></label>
+          <button class="btn btn-primary">Sign in</button>
+        </div>
+        <div class="login-helper"><span>New teacher?</span><b>Your school administrator sends your invitation by email.</b></div>
+        <p class="note">Your Staff ID is part of your school record. It is not your login credential.</p>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-admin" aria-labelledby="admin-heading">
+      <div class="app-frame">
+        <aside class="sidebar">
+          <div class="brand"><span class="brand-mark small">SL</span><div><b>School LN CM</b><small>Learning & curriculum</small></div></div>
+          <div class="school"><span>SCHOOL</span><b>Future Speakers International School</b><em>FSIS</em></div>
+          <nav><a class="active">Overview</a><a>Staff</a><a>Academic setup</a><a>Curriculum <small>Soon</small></a></nav>
+          <div class="user"><span class="avatar">A</span><div><b>School administrator</b><small>Administrator</small></div></div>
+        </aside>
+        <div class="content">
+          <div class="hero"><div><p class="eyebrow">SCHOOL OVERVIEW</p><h1 id="admin-heading">Good morning.</h1><p class="muted">Keep your school's people, academic setup and teaching operations organised from one place.</p><div class="context-strip"><span class="context-chip"><b>FSIS</b> Future Speakers International School</span><span class="context-chip">Session <b>2026/2027</b></span></div></div><button class="btn btn-primary">Add a teacher →</button></div>
+          <div class="stats"><article><span>Active teachers</span><strong>10</strong><small>Teachers currently active in this school.</small></article><article><span>Pending invitations</span><strong>2</strong><small>Invited teachers who have not completed setup.</small></article><article><span>Academic session</span><strong>2026/2027</strong><small>Current school session used by academic work.</small></article></div>
+          <div class="columns"><article class="panel"><div class="panel-head"><div><h2>Staff operations</h2><p>Invite teachers, attach teaching assignments and track onboarding.</p></div><button class="text-btn">Open staff</button></div><div class="rows"><div class="row"><span class="tag">NEXT</span><div><b>Invite a teacher</b><p>Use the teacher’s real email address. The school Staff ID is generated automatically.</p></div><button class="btn btn-secondary">Start</button></div><div class="row"><span class="tag">CHECK</span><div><b>Review invitations</b><p>Pending memberships stay inactive until account setup is complete.</p></div><button class="btn btn-secondary">Review</button></div></div></article><article class="panel"><div class="panel-head"><div><h2>Academic setup</h2><p>Get the teaching context ready before curriculum work begins.</p></div></div><div class="progress"><div><span>Foundation</span><b>In progress</b></div><div class="track"><span style="width:42%"></span></div></div><p class="muted small">School, staff and session foundations are available. Curriculum and lesson workflows are the next product layer.</p></article></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-staff" aria-labelledby="staff-heading">
+      <div class="app-frame">
+        <aside class="sidebar">
+          <div class="brand"><span class="brand-mark small">SL</span><div><b>School LN CM</b><small>Learning & curriculum</small></div></div>
+          <div class="school"><span>SCHOOL</span><b>Future Speakers International School</b><em>FSIS</em></div>
+          <nav><a>Overview</a><a class="active">Staff</a><a>Academic setup</a><a>Curriculum <small>Soon</small></a></nav>
+          <div class="user"><span class="avatar">A</span><div><b>School administrator</b><small>Administrator</small></div></div>
+        </aside>
+        <div class="content">
+          <div class="hero"><div><p class="eyebrow">STAFF MANAGEMENT</p><h1 id="staff-heading">Add a teacher.</h1><p class="muted">Invite a teacher with their real email address, then give them the class and subject context they need.</p><div class="context-strip"><span class="context-chip"><b>FSIS</b> Future Speakers International School</span><span class="context-chip">Role <b>School administrator</b></span></div></div><span class="live"><i></i> Live staff workspace</span></div>
+          <div class="staff-columns"><article class="panel form-panel"><div class="panel-head"><div><h2>Invite teacher</h2><p>Send a secure account invitation. They will create their password themselves.</p></div></div><div class="form two"><label>First name<input placeholder="Sarah"></label><label>Last name<input placeholder="Johnson"></label></div><div class="form"><label>Email address<input type="email" placeholder="sarah@example.com"></label></div><div class="assign"><div class="panel-head"><div><h2>Teaching assignments</h2><p>Add the class, subject and academic session this teacher will work with.</p></div><button class="btn btn-secondary">+ Add assignment</button></div><div class="empty">No assignments yet. You can invite the teacher first and add academic assignments later.</div></div><div class="form-footer"><p>Account activation happens from the teacher’s invitation email.</p><button class="btn btn-primary">Send invitation</button></div></article><article class="panel"><div class="panel-head"><div><h2>Invitation history</h2><p>Pending teachers remain inactive until they complete account setup.</p></div><span class="count">2</span></div><div class="invites"><div class="invite"><span class="avatar soft">SJ</span><div><b>Sarah Johnson</b><p>sarah@example.com</p><small>FSIS-T-0001 · teacher</small></div><div><span class="status pending">pending</span><button class="danger">Revoke</button></div></div><div class="invite"><span class="avatar soft">DO</span><div><b>David Okafor</b><p>david@example.com</p><small>FSIS-T-0002 · teacher</small></div><div><span class="status accepted">accepted</span></div></div></div></article></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-teacher" aria-labelledby="teacher-heading">
+      <div class="app-frame">
+        <aside class="sidebar"><div class="brand"><span class="brand-mark small">SL</span><div><b>School LN CM</b><small>Learning & curriculum</small></div></div><div class="school"><span>SCHOOL</span><b>Future Speakers International School</b><em>FSIS</em></div><nav><a class="active">Today</a><a>My lessons</a><a>Curriculum</a><a>Lesson library</a></nav><div class="user"><span class="avatar">S</span><div><b>Sarah Johnson</b><small>Teacher</small></div></div></aside>
+        <div class="content"><div class="hero"><div><p class="eyebrow">TEACHER WORKSPACE</p><h1 id="teacher-heading">Good morning, Sarah.</h1><p class="muted">Your teaching workspace keeps the class, subject and curriculum context close to the lesson you’re preparing.</p><div class="context-strip"><span class="context-chip"><b>FSIS</b> Future Speakers International School</span><span class="context-chip">Session <b>2026/2027</b></span></div></div></div><div class="stats"><article><span>Today’s lessons</span><strong>3</strong><small>Lessons scheduled for today.</small></article><article><span>Preparation</span><strong>67%</strong><small>Preparation progress across your upcoming work.</small></article><article><span>Current session</span><strong>2026/2027</strong><small>Academic context for your teaching work.</small></article></div><div class="columns"><article class="panel"><div class="panel-head"><div><h2>Today’s teaching plan</h2><p>Your next lessons, in classroom order.</p></div></div><div class="rows"><div class="row"><span class="tag">09:00</span><div><b>Whole Numbers</b><p>Primary 5 · Mathematics · Week 1</p></div><button class="btn btn-primary">Prepare</button></div><div class="row"><span class="tag">11:00</span><div><b>Living Things</b><p>Primary 5 · Basic Science · Week 1</p></div><button class="btn btn-secondary">View</button></div><div class="row"><span class="tag">13:00</span><div><b>Fractions</b><p>Primary 6 · Mathematics · Week 1</p></div><button class="btn btn-secondary">View</button></div></div></article><article class="panel"><div class="panel-head"><div><h2>Lesson preparation</h2><p>Keep the lesson context visible from planning to delivery.</p></div></div><div class="context-strip"><span class="context-chip">Class <b>Primary 5</b></span><span class="context-chip">Subject <b>Mathematics</b></span><span class="context-chip">Week <b>Week 1</b></span></div><div class="progress"><div><span>Whole Numbers</span><b>Ready</b></div><div class="track"><span style="width:100%"></span></div></div><button class="btn btn-primary full">Open lesson note</button></article></div></div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">Static design preview only. Authentication, Supabase data, invitations and server actions remain in the real School LN CM application.</footer>
+  <script>
+    document.querySelectorAll('.screen-tab').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.screen-tab').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.screen').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById('screen-' + button.dataset.screen).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
