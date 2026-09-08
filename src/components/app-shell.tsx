@@ -15,7 +15,7 @@ const adminNavigation = [
   ["overview", "Overview", "/", "O"],
   ["staff", "Staff", "/admin/staff", "S"],
   ["academic", "Academic setup", "/admin/academic", "A"],
-  ["curriculum", "Curriculum", "#", "C"],
+  ["curriculum", "Curriculum", "/admin/curriculum", "C"],
 ] as const;
 
 const teacherNavigation = [
