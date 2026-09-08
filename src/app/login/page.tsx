@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     setLoading(false);
     if (signInError) {
-      setError("Invalid email or password. Check your details and try again.");
+      setError("We couldn't sign you in. Check your email and password and try again.");
       return;
     }
 
@@ -34,11 +34,15 @@ export default function LoginPage() {
 
   return (
     <main className="login-shell">
-      <section className="login-card">
-        <div className="brand-mark">SL</div>
+      <section className="login-card" aria-labelledby="login-title">
+        <div className="brand-mark" aria-hidden="true">SL</div>
         <p className="eyebrow">SCHOOL LN CM</p>
-        <h1>Welcome back.</h1>
-        <p className="muted">Sign in with the email address registered for your school account.</p>
+        <h1 id="login-title">Welcome back.</h1>
+        <p className="muted">Sign in to continue your school's teaching and curriculum workspace.</p>
+
+        <div className="context-strip">
+          <span className="context-chip"><strong>FSIS</strong> Future Speakers International School</span>
+        </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <label>
@@ -49,6 +53,7 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
+              autoFocus
               required
             />
           </label>
@@ -59,20 +64,25 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
+              placeholder="Your password"
               autoComplete="current-password"
               required
             />
           </label>
 
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
 
           <button type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
-        <p className="login-note">Teachers receive their account by email invitation. Your Staff ID remains a school record identifier, not a login credential.</p>
+        <div className="login-helper">
+          <span>New teacher?</span>
+          <strong>Your school administrator sends your invitation by email.</strong>
+        </div>
+
+        <p className="login-note">Your Staff ID is part of your school record. It is not your login credential.</p>
       </section>
     </main>
   );
