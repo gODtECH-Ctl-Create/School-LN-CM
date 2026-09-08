@@ -1,0 +1,18 @@
+.libraryToolbar { padding: 18px; margin-bottom: 16px; }
+.librarySearch { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.libraryResultNote { margin: 10px 0 0; color: var(--muted); font-size: 10px; }
+.libraryResultNote strong { color: var(--ink-soft); }
+.libraryGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.libraryCard { min-width: 0; padding: 19px; }
+.libraryCardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.libraryCardHeader h2 { margin: 0; font-size: 17px; letter-spacing: -.025em; }
+.libraryContext { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.libraryContext span { padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 9px; font-weight: 750; background: var(--surface-soft); }
+.libraryPreview { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; margin: 14px 0; color: var(--ink-soft); font-size: 11px; line-height: 1.65; min-height: 73px; }
+.libraryCardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+.libraryEmpty { grid-column: 1 / -1; min-height: 420px; padding: 30px; display: grid; align-content: center; justify-items: start; max-width: 720px; }
+.libraryEmpty h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.04em; }
+@media (max-width: 760px) {
+  .librarySearch, .libraryGrid { grid-template-columns: 1fr; }
+  .libraryCardHeader, .libraryCardFooter { align-items: stretch; flex-direction: column; }
+}
