@@ -4,7 +4,7 @@ import TeacherLessonsClient, { type LessonWorkspaceData } from "./teacher-lesson
 import { createClient } from "@/src/lib/supabase/server";
 
 export default async function TeacherLessonsPage({ searchParams }: { searchParams: Promise<{ lesson?: string }> }) {
-  const params = await searchParams;
+  await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
@@ -46,12 +46,20 @@ export default async function TeacherLessonsPage({ searchParams }: { searchParam
     noteTermIds.length ? supabase.from("terms").select("id, academic_session_id, name, term_number, is_current").in("id", noteTermIds) : Promise.resolve({ data: [] }),
   ]);
 
-  const selectedId = params.lesson && (notes ?? []).some((note) => note.id === params.lesson) ? params.lesson : (notes ?? [])[0]?.id ?? "";
-  const initialData: LessonWorkspaceData = { school, assignments: safeAssignments, classes: classes ?? [], subjects: subjects ?? [], sessions: sessions ?? [], terms: terms ?? [], topics, notes: notes ?? [] };
+  const initialData: LessonWorkspaceData = {
+    school,
+    assignments: safeAssignments,
+    classes: classes ?? [],
+    subjects: subjects ?? [],
+    sessions: sessions ?? [],
+    terms: terms ?? [],
+    topics,
+    notes: notes ?? [],
+  };
 
   return (
     <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="lessons">
-      <div className="page-wrap"><TeacherLessonsClient initialData={initialData} initialSelectedId={selectedId} /></div>
+      <div className="page-wrap"><TeacherLessonsClient initialData={initialData} /></div>
     </AppShell>
   );
 }
