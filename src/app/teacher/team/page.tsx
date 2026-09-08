@@ -39,7 +39,6 @@ export default async function TeacherTeamPage() {
     teacherIds.length ? supabase.from("lesson_notes").select("id, teacher_membership_id, status").in("teacher_membership_id", teacherIds) : Promise.resolve({ data: [] }),
   ]);
 
-  const assignmentPairs = (assignments ?? []).map((assignment) => `${assignment.class_id}:${assignment.subject_id}`);
   const teacherCards = teacherMemberships.map((teacher) => {
     const staff = (staffProfiles ?? []).find((item) => item.membership_id === teacher.id);
     const profile = (profiles ?? []).find((item) => item.id === teacher.user_id);
@@ -52,7 +51,6 @@ export default async function TeacherTeamPage() {
       assignments: teacherAssignments.length,
       lessons: teacherNotes.length,
       published: teacherNotes.filter((note) => note.status === "published").length,
-      _pairCount: assignmentPairs.length,
     };
   });
 
