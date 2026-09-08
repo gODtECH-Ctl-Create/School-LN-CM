@@ -54,10 +54,9 @@ On mobile:
 ```text
 header
 content
-bottom navigation / compact menu
 ```
 
-Do not shrink the desktop sidebar into an unusable strip.
+The desktop sidebar intentionally becomes a compact top bar rather than shrinking into an unusable strip. A future mobile navigation pattern can be introduced once the route set is large enough to justify it.
 
 ## Navigation model
 
@@ -77,7 +76,7 @@ Do not shrink the desktop sidebar into an unusable strip.
 - Lesson library
 - Progress
 
-Navigation labels should describe the job a user is doing, not a database table.
+Navigation labels should describe the job a user is doing, not a database table. Unimplemented destinations remain visibly marked as coming soon rather than pretending the route exists.
 
 ## Page header
 
@@ -138,7 +137,7 @@ LessonCard
 EmptyState
 ```
 
-Domain components should compose these primitives rather than introducing new visual conventions.
+The current repository has an `AppShell` implementation and shared CSS tokens. As more screens are added, repeated patterns should graduate into dedicated reusable primitives rather than accumulating page-specific CSS.
 
 ## UI review rule
 
