@@ -4,15 +4,9 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-function staffLoginEmail(identifier: string) {
-  const value = identifier.trim();
-  if (value.includes("@")) return value;
-  return `${value.toLowerCase()}@staff.school-ln-cm.local`;
-}
-
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,13 +18,13 @@ export default function LoginPage() {
 
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: staffLoginEmail(identifier),
+      email: email.trim().toLowerCase(),
       password,
     });
 
     setLoading(false);
     if (signInError) {
-      setError("Invalid login details. Check your Staff ID or email and password.");
+      setError("We couldn't sign you in. Check your email and password and try again.");
       return;
     }
 
@@ -40,20 +34,26 @@ export default function LoginPage() {
 
   return (
     <main className="login-shell">
-      <section className="login-card">
-        <div className="brand-mark">SL</div>
+      <section className="login-card" aria-labelledby="login-title">
+        <div className="brand-mark" aria-hidden="true">SL</div>
         <p className="eyebrow">SCHOOL LN CM</p>
-        <h1>Welcome back.</h1>
-        <p className="muted">Sign in with your school staff ID or administrator email.</p>
+        <h1 id="login-title">Welcome back.</h1>
+        <p className="muted">Sign in to continue your school's teaching and curriculum workspace.</p>
+
+        <div className="context-strip">
+          <span className="context-chip"><strong>FSIS</strong> Future Speakers International School</span>
+        </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <label>
-            Staff ID or Admin Email
+            Email address
             <input
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder="FSIS-T-0001 or admin@example.com"
-              autoComplete="username"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              autoFocus
               required
             />
           </label>
@@ -64,20 +64,25 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
+              placeholder="Your password"
               autoComplete="current-password"
               required
             />
           </label>
 
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
 
           <button type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
-        <p className="login-note">Teachers use their school-issued Staff ID. School administrators use their registered email.</p>
+        <div className="login-helper">
+          <span>New teacher?</span>
+          <strong>Your school administrator sends your invitation by email.</strong>
+        </div>
+
+        <p className="login-note">Your Staff ID is part of your school record. It is not your login credential.</p>
       </section>
     </main>
   );
