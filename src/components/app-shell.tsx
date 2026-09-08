@@ -14,7 +14,7 @@ type AppShellProps = {
 const adminNavigation = [
   ["overview", "Overview", "/", "O"],
   ["staff", "Staff", "/admin/staff", "S"],
-  ["academic", "Academic setup", "#", "A"],
+  ["academic", "Academic setup", "/admin/academic", "A"],
   ["curriculum", "Curriculum", "#", "C"],
 ] as const;
 
@@ -68,10 +68,10 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
         </nav>
 
         <div className="sidebar-footer">
-          <Link href="#" className="nav-item is-disabled" aria-disabled="true">
+          <span className="nav-item is-disabled" aria-disabled="true">
             <span className="nav-icon" aria-hidden="true">?</span>
             Help & support
-          </Link>
+          </span>
           <div className="user-chip">
             <span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
             <span>
