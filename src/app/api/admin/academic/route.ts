@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/src/lib/supabase/server";
 
 const ADMIN_ROLES = ["school_admin", "academic_coordinator", "platform_admin"] as const;
-
 type Action = "create_session" | "update_session" | "create_term" | "update_term" | "create_class" | "update_class" | "delete_class" | "create_subject" | "update_subject" | "delete_subject";
 
 function jsonError(message: string, status = 400) {
@@ -70,12 +69,7 @@ async function loadAcademicData(
         .order("term_number")
     : { data: [] as { id: string; academic_session_id: string; name: string; term_number: number; starts_on: string; ends_on: string; is_current: boolean }[] };
 
-  return {
-    sessions: sessions ?? [],
-    terms: terms ?? [],
-    classes: classes ?? [],
-    subjects: subjects ?? [],
-  };
+  return { sessions: sessions ?? [], terms: terms ?? [], classes: classes ?? [], subjects: subjects ?? [] };
 }
 
 export async function GET(request: NextRequest) {
@@ -85,13 +79,13 @@ export async function GET(request: NextRequest) {
 
   const requestedSchoolId = request.nextUrl.searchParams.get("schoolId");
   const schoolId = requestedSchoolId ?? context.schools[0]?.id;
-  if (!schoolId || !canManageSchool(context, schoolId)) {
-    return jsonError("You do not have access to that school.", 403);
-  }
+  if (!schoolId || !canManageSchool(context, schoolId)) return jsonError("You do not have access to that school.", 403);
 
-  const data = await loadAcademicData(supabase, schoolId);
-  const school = context.schools.find((item) => item.id === schoolId);
-  return NextResponse.json({ schools: context.schools, school, ...data });
+  return NextResponse.json({
+    schools: context.schools,
+    school: context.schools.find((item) => item.id === schoolId),
+    ...(await loadAcademicData(supabase, schoolId)),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -116,126 +110,84 @@ export async function POST(request: NextRequest) {
       isCurrent?: boolean;
     };
 
-    const action = body.action;
-    const schoolId = body.schoolId;
+    const { action, schoolId } = body;
     if (!action || !schoolId) return jsonError("Action and school are required.");
     if (!canManageSchool(context, schoolId)) return jsonError("You do not have access to that school.", 403);
 
     if (action === "create_session" || action === "update_session") {
       const name = body.name?.trim();
-      const startsOn = body.startsOn;
-      const endsOn = body.endsOn;
-      if (!name || !startsOn || !endsOn) return jsonError("Session name and dates are required.");
-      if (endsOn < startsOn) return jsonError("Session end date cannot be before its start date.");
-      if (action === "create_session") {
-        const { error } = await supabase.from("academic_sessions").insert({
-          school_id: schoolId,
-          name,
-          starts_on: startsOn,
-          ends_on: endsOn,
-          is_current: Boolean(body.isCurrent),
-        });
-        if (error) return jsonError(error.code === "23505" ? "That session already exists or is already marked current." : "Unable to create academic session.", 409);
-      } else {
-        if (!body.sessionId) return jsonError("Session is required.");
-        if (body.isCurrent) {
-          const { error: clearError } = await supabase
-            .from("academic_sessions")
-            .update({ is_current: false })
-            .eq("school_id", schoolId)
-            .eq("is_current", true)
-            .neq("id", body.sessionId);
-          if (clearError) return jsonError("Unable to update current session.", 409);
-        }
+      if (!name || !body.startsOn || !body.endsOn) return jsonError("Session name and dates are required.");
+      if (body.endsOn < body.startsOn) return jsonError("Session end date cannot be before its start date.");
+
+      if (body.isCurrent) {
         const { error } = await supabase
           .from("academic_sessions")
-          .update({ name, starts_on: startsOn, ends_on: endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() })
-          .eq("id", body.sessionId)
-          .eq("school_id", schoolId);
-        if (error) return jsonError(error.code === "23505" ? "That session already exists or is already marked current." : "Unable to update academic session.", 409);
+          .update({ is_current: false, updated_at: new Date().toISOString() })
+          .eq("school_id", schoolId)
+          .eq("is_current", true)
+          ...(body.sessionId ? ["neq", "id", body.sessionId] as never[] : []);
+        if (error) return jsonError("Unable to update the current session.", 409);
       }
+
+      const payload = { school_id: schoolId, name, starts_on: body.startsOn, ends_on: body.endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() };
+      const query = action === "create_session"
+        ? supabase.from("academic_sessions").insert(payload)
+        : supabase.from("academic_sessions").update(payload).eq("id", body.sessionId ?? "").eq("school_id", schoolId);
+      const { error } = await query;
+      if (error) return jsonError(error.code === "23505" ? "That session already exists or is already marked current." : "Unable to save academic session.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
     if (action === "create_term" || action === "update_term") {
-      if (!body.sessionId || !body.name?.trim() || !body.startsOn || !body.endsOn || !body.termNumber) {
-        return jsonError("Academic session, term name, number and dates are required.");
-      }
+      if (!body.sessionId || !body.name?.trim() || !body.startsOn || !body.endsOn || !body.termNumber) return jsonError("Academic session, term name, number and dates are required.");
       if (![1, 2, 3].includes(body.termNumber)) return jsonError("Term number must be 1, 2 or 3.");
       if (body.endsOn < body.startsOn) return jsonError("Term end date cannot be before its start date.");
-      const { data: session } = await supabase
-        .from("academic_sessions")
-        .select("id")
-        .eq("id", body.sessionId)
-        .eq("school_id", schoolId)
-        .maybeSingle();
+
+      const { data: session } = await supabase.from("academic_sessions").select("id").eq("id", body.sessionId).eq("school_id", schoolId).maybeSingle();
       if (!session) return jsonError("Academic session does not belong to this school.", 400);
 
-      if (action === "create_term") {
-        const { error } = await supabase.from("terms").insert({
-          academic_session_id: body.sessionId,
-          name: body.name.trim(),
-          term_number: body.termNumber,
-          starts_on: body.startsOn,
-          ends_on: body.endsOn,
-          is_current: Boolean(body.isCurrent),
-        });
-        if (error) return jsonError(error.code === "23505" ? "That term already exists or is already marked current." : "Unable to create term.", 409);
-      } else {
-        if (!body.termId) return jsonError("Term is required.");
-        if (body.isCurrent) {
-          const { error: clearError } = await supabase
-            .from("terms")
-            .update({ is_current: false })
-            .eq("academic_session_id", body.sessionId)
-            .eq("is_current", true)
-            .neq("id", body.termId);
-          if (clearError) return jsonError("Unable to update current term.", 409);
-        }
+      if (body.isCurrent) {
         const { error } = await supabase
           .from("terms")
-          .update({ name: body.name.trim(), term_number: body.termNumber, starts_on: body.startsOn, ends_on: body.endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() })
-          .eq("id", body.termId);
-        if (error) return jsonError(error.code === "23505" ? "That term already exists or is already marked current." : "Unable to update term.", 409);
+          .update({ is_current: false, updated_at: new Date().toISOString() })
+          .eq("academic_session_id", body.sessionId)
+          .eq("is_current", true)
+          ...(body.termId ? ["neq", "id", body.termId] as never[] : []);
+        if (error) return jsonError("Unable to update the current term.", 409);
       }
+
+      const payload = { academic_session_id: body.sessionId, name: body.name.trim(), term_number: body.termNumber, starts_on: body.startsOn, ends_on: body.endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() };
+      const query = action === "create_term"
+        ? supabase.from("terms").insert(payload)
+        : supabase.from("terms").update(payload).eq("id", body.termId ?? "");
+      const { error } = await query;
+      if (error) return jsonError(error.code === "23505" ? "That term already exists or is already marked current." : "Unable to save term.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
-    if (["create_class", "update_class", "delete_class"].includes(action)) {
-      if (action === "delete_class") {
-        if (!body.classId) return jsonError("Class is required.");
-        const { error } = await supabase.from("classes").delete().eq("id", body.classId).eq("school_id", schoolId);
-        if (error) return jsonError("Unable to remove class. It may already be referenced by teaching assignments.", 409);
-      } else {
-        if (!body.name?.trim()) return jsonError("Class name is required.");
-        if (action === "create_class") {
-          const { error } = await supabase.from("classes").insert({ school_id: schoolId, name: body.name.trim(), level: body.level?.trim() || null });
-          if (error) return jsonError(error.code === "23505" ? "That class already exists." : "Unable to create class.", 409);
-        } else {
-          if (!body.classId) return jsonError("Class is required.");
-          const { error } = await supabase.from("classes").update({ name: body.name.trim(), level: body.level?.trim() || null, updated_at: new Date().toISOString() }).eq("id", body.classId).eq("school_id", schoolId);
-          if (error) return jsonError(error.code === "23505" ? "That class name is already in use." : "Unable to update class.", 409);
-        }
-      }
+    if (action === "delete_class" || action === "delete_subject") {
+      return jsonError("Classes and subjects cannot be deleted once created. Edit the record instead so historical teaching data remains safe.", 409);
+    }
+
+    if (action === "create_class" || action === "update_class") {
+      if (!body.name?.trim()) return jsonError("Class name is required.");
+      const payload = { school_id: schoolId, name: body.name.trim(), level: body.level?.trim() || null, updated_at: new Date().toISOString() };
+      const query = action === "create_class"
+        ? supabase.from("classes").insert(payload)
+        : supabase.from("classes").update(payload).eq("id", body.classId ?? "").eq("school_id", schoolId);
+      const { error } = await query;
+      if (error) return jsonError(error.code === "23505" ? "That class already exists." : "Unable to save class.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
-    if (["create_subject", "update_subject", "delete_subject"].includes(action)) {
-      if (action === "delete_subject") {
-        if (!body.subjectId) return jsonError("Subject is required.");
-        const { error } = await supabase.from("subjects").delete().eq("id", body.subjectId).eq("school_id", schoolId);
-        if (error) return jsonError("Unable to remove subject. It may already be referenced by teaching assignments.", 409);
-      } else {
-        if (!body.name?.trim()) return jsonError("Subject name is required.");
-        if (action === "create_subject") {
-          const { error } = await supabase.from("subjects").insert({ school_id: schoolId, name: body.name.trim(), code: body.code?.trim().toUpperCase() || null });
-          if (error) return jsonError(error.code === "23505" ? "That subject or subject code already exists." : "Unable to create subject.", 409);
-        } else {
-          if (!body.subjectId) return jsonError("Subject is required.");
-          const { error } = await supabase.from("subjects").update({ name: body.name.trim(), code: body.code?.trim().toUpperCase() || null, updated_at: new Date().toISOString() }).eq("id", body.subjectId).eq("school_id", schoolId);
-          if (error) return jsonError(error.code === "23505" ? "That subject or subject code is already in use." : "Unable to update subject.", 409);
-        }
-      }
+    if (action === "create_subject" || action === "update_subject") {
+      if (!body.name?.trim()) return jsonError("Subject name is required.");
+      const payload = { school_id: schoolId, name: body.name.trim(), code: body.code?.trim().toUpperCase() || null, updated_at: new Date().toISOString() };
+      const query = action === "create_subject"
+        ? supabase.from("subjects").insert(payload)
+        : supabase.from("subjects").update(payload).eq("id", body.subjectId ?? "").eq("school_id", schoolId);
+      const { error } = await query;
+      if (error) return jsonError(error.code === "23505" ? "That subject or subject code is already in use." : "Unable to save subject.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
