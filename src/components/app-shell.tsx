@@ -42,13 +42,7 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
           <span className="nav-label">Workspace</span>
           {navigation.map(([key, label, href, mark]) => {
             const isActive = active === key;
-            const disabled = href === "#";
-            return disabled ? (
-              <span className={`nav-item ${isActive ? "is-active" : "is-disabled"}`} key={key} aria-disabled="true">
-                <span className="nav-icon" aria-hidden="true">{mark}</span>{label}
-                <span className="coming-pill">Soon</span>
-              </span>
-            ) : (
+            return (
               <Link className={`nav-item ${isActive ? "is-active" : ""}`} href={href} key={key}>
                 <span className="nav-icon" aria-hidden="true">{mark}</span>{label}
               </Link>
