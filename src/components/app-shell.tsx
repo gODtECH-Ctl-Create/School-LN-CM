@@ -22,7 +22,7 @@ const teacherNavigation = [
   ["overview", "Today", "/", "T"],
   ["lessons", "My lessons", "/teacher/lessons", "L"],
   ["curriculum", "Curriculum", "/teacher/curriculum", "C"],
-  ["library", "Lesson library", "#", "B"],
+  ["library", "Lesson library", "/teacher/library", "B"],
 ] as const;
 
 export function AppShell({ children, role, schoolName, schoolCode, userName, active = "overview" }: AppShellProps) {
@@ -35,16 +35,9 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
       <aside className="app-sidebar">
         <Link href="/" className="app-brand" aria-label="School LN CM home">
           <span className="brand-mark brand-mark-small">SL</span>
-          <span>
-            <strong>School LN CM</strong>
-            <small>Learning & curriculum</small>
-          </span>
+          <span><strong>School LN CM</strong><small>Learning & curriculum</small></span>
         </Link>
-        <div className="school-context">
-          <span className="school-context-label">School</span>
-          <strong>{schoolName}</strong>
-          <span>{schoolCode}</span>
-        </div>
+        <div className="school-context"><span className="school-context-label">School</span><strong>{schoolName}</strong><span>{schoolCode}</span></div>
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
           {navigation.map(([key, label, href, mark]) => {
@@ -52,14 +45,12 @@ export function AppShell({ children, role, schoolName, schoolCode, userName, act
             const disabled = href === "#";
             return disabled ? (
               <span className={`nav-item ${isActive ? "is-active" : "is-disabled"}`} key={key} aria-disabled="true">
-                <span className="nav-icon" aria-hidden="true">{mark}</span>
-                {label}
-                {label === "Curriculum" && <span className="coming-pill">Soon</span>}
+                <span className="nav-icon" aria-hidden="true">{mark}</span>{label}
+                <span className="coming-pill">Soon</span>
               </span>
             ) : (
               <Link className={`nav-item ${isActive ? "is-active" : ""}`} href={href} key={key}>
-                <span className="nav-icon" aria-hidden="true">{mark}</span>
-                {label}
+                <span className="nav-icon" aria-hidden="true">{mark}</span>{label}
               </Link>
             );
           })}
