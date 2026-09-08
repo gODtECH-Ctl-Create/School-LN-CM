@@ -21,7 +21,7 @@ const adminNavigation = [
 
 const teacherNavigation = [
   ["overview", "Today", "/", "T"],
-  ["lessons", "My lessons", "/teacher/lessons", "L"],
+  ["lessons", "Lessons", "/teacher/lessons", "L"],
   ["curriculum", "Curriculum", "/teacher/curriculum", "C"],
   ["library", "Library", "/teacher/library", "B"],
 ] as const;
@@ -66,7 +66,12 @@ export function AppShell({
           {navigation.map(([key, label, href, mark]) => {
             const isActive = active === key;
             return (
-              <Link className={`nav-item ${isActive ? "is-active" : ""}`} href={href} key={key}>
+              <Link
+                className={`nav-item ${isActive ? "is-active" : ""}`}
+                href={href}
+                key={key}
+                aria-current={isActive ? "page" : undefined}
+              >
                 <span className="nav-icon" aria-hidden="true">{mark}</span>
                 {label}
               </Link>
@@ -91,13 +96,34 @@ export function AppShell({
 
       <main className="app-content">
         <header className="mobile-topbar">
-          <Link href="/" className="mobile-brand">
+          <Link href="/" className="mobile-brand" aria-label="School LN CM home">
             <span className="brand-mark brand-mark-small">SL</span>
-            <strong>School LN CM</strong>
+            <span className="mobile-brand-copy">
+              <strong>{schoolCode}</strong>
+              <small>{accessLabel}</small>
+            </span>
           </Link>
-          <span className="mobile-school-code">{schoolCode}</span>
+          <span className="mobile-user-name">{displayName}</span>
         </header>
+
         {children}
+
+        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+          {navigation.map(([key, label, href, mark]) => {
+            const isActive = active === key;
+            return (
+              <Link
+                className={`mobile-nav-item ${isActive ? "is-active" : ""}`}
+                href={href}
+                key={key}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <span className="mobile-nav-icon" aria-hidden="true">{mark}</span>
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </main>
     </div>
   );
