@@ -4,15 +4,9 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 
-function staffLoginEmail(identifier: string) {
-  const value = identifier.trim();
-  if (value.includes("@")) return value;
-  return `${value.toLowerCase()}@staff.school-ln-cm.local`;
-}
-
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,13 +18,13 @@ export default function LoginPage() {
 
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: staffLoginEmail(identifier),
+      email: email.trim().toLowerCase(),
       password,
     });
 
     setLoading(false);
     if (signInError) {
-      setError("Invalid login details. Check your Staff ID or email and password.");
+      setError("Invalid email or password. Check your details and try again.");
       return;
     }
 
@@ -44,16 +38,17 @@ export default function LoginPage() {
         <div className="brand-mark">SL</div>
         <p className="eyebrow">SCHOOL LN CM</p>
         <h1>Welcome back.</h1>
-        <p className="muted">Sign in with your school staff ID or administrator email.</p>
+        <p className="muted">Sign in with the email address registered for your school account.</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <label>
-            Staff ID or Admin Email
+            Email address
             <input
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder="FSIS-T-0001 or admin@example.com"
-              autoComplete="username"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
               required
             />
           </label>
@@ -77,7 +72,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="login-note">Teachers use their school-issued Staff ID. School administrators use their registered email.</p>
+        <p className="login-note">Teachers receive their account by email invitation. Your Staff ID remains a school record identifier, not a login credential.</p>
       </section>
     </main>
   );
