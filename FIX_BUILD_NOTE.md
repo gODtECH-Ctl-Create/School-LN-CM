@@ -1,1 +1,0 @@
-Temporary build diagnosis: the TypeScript path alias is `@/* -> ./src/*`, so imports must use `@/lib/...`, not `@/src/lib/...`. This note is retained only as a deployment trace.
