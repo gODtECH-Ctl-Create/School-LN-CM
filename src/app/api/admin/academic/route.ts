@@ -43,30 +43,14 @@ async function loadAcademicData(
   schoolId: string,
 ) {
   const [{ data: sessions }, { data: classes }, { data: subjects }] = await Promise.all([
-    supabase
-      .from("academic_sessions")
-      .select("id, name, starts_on, ends_on, is_current")
-      .eq("school_id", schoolId)
-      .order("starts_on", { ascending: false }),
-    supabase
-      .from("classes")
-      .select("id, name, level")
-      .eq("school_id", schoolId)
-      .order("name"),
-    supabase
-      .from("subjects")
-      .select("id, name, code")
-      .eq("school_id", schoolId)
-      .order("name"),
+    supabase.from("academic_sessions").select("id, name, starts_on, ends_on, is_current").eq("school_id", schoolId).order("starts_on", { ascending: false }),
+    supabase.from("classes").select("id, name, level").eq("school_id", schoolId).order("name"),
+    supabase.from("subjects").select("id, name, code").eq("school_id", schoolId).order("name"),
   ]);
 
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: terms } = sessionIds.length
-    ? await supabase
-        .from("terms")
-        .select("id, academic_session_id, name, term_number, starts_on, ends_on, is_current")
-        .in("academic_session_id", sessionIds)
-        .order("term_number")
+    ? await supabase.from("terms").select("id, academic_session_id, name, term_number, starts_on, ends_on, is_current").in("academic_session_id", sessionIds).order("term_number")
     : { data: [] as { id: string; academic_session_id: string; name: string; term_number: number; starts_on: string; ends_on: string; is_current: boolean }[] };
 
   return { sessions: sessions ?? [], terms: terms ?? [], classes: classes ?? [], subjects: subjects ?? [] };
@@ -81,11 +65,35 @@ export async function GET(request: NextRequest) {
   const schoolId = requestedSchoolId ?? context.schools[0]?.id;
   if (!schoolId || !canManageSchool(context, schoolId)) return jsonError("You do not have access to that school.", 403);
 
-  return NextResponse.json({
-    schools: context.schools,
-    school: context.schools.find((item) => item.id === schoolId),
-    ...(await loadAcademicData(supabase, schoolId)),
-  });
+  return NextResponse.json({ schools: context.schools, school: context.schools.find((item) => item.id === schoolId), ...(await loadAcademicData(supabase, schoolId)) });
+}
+
+async function clearOtherCurrentSessions(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  schoolId: string,
+  exceptId?: string,
+) {
+  let query = supabase
+    .from("academic_sessions")
+    .update({ is_current: false, updated_at: new Date().toISOString() })
+    .eq("school_id", schoolId)
+    .eq("is_current", true);
+  if (exceptId) query = query.neq("id", exceptId);
+  return query;
+}
+
+async function clearOtherCurrentTerms(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sessionId: string,
+  exceptId?: string,
+) {
+  let query = supabase
+    .from("terms")
+    .update({ is_current: false, updated_at: new Date().toISOString() })
+    .eq("academic_session_id", sessionId)
+    .eq("is_current", true);
+  if (exceptId) query = query.neq("id", exceptId);
+  return query;
 }
 
 export async function POST(request: NextRequest) {
@@ -118,18 +126,21 @@ export async function POST(request: NextRequest) {
       const name = body.name?.trim();
       if (!name || !body.startsOn || !body.endsOn) return jsonError("Session name and dates are required.");
       if (body.endsOn < body.startsOn) return jsonError("Session end date cannot be before its start date.");
+      if (action === "update_session" && !body.sessionId) return jsonError("Session is required.");
 
       if (body.isCurrent) {
-        const { error } = await supabase
-          .from("academic_sessions")
-          .update({ is_current: false, updated_at: new Date().toISOString() })
-          .eq("school_id", schoolId)
-          .eq("is_current", true)
-          ...(body.sessionId ? ["neq", "id", body.sessionId] as never[] : []);
+        const { error } = await clearOtherCurrentSessions(supabase, schoolId, body.sessionId);
         if (error) return jsonError("Unable to update the current session.", 409);
       }
 
-      const payload = { school_id: schoolId, name, starts_on: body.startsOn, ends_on: body.endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() };
+      const payload = {
+        school_id: schoolId,
+        name,
+        starts_on: body.startsOn,
+        ends_on: body.endsOn,
+        is_current: Boolean(body.isCurrent),
+        updated_at: new Date().toISOString(),
+      };
       const query = action === "create_session"
         ? supabase.from("academic_sessions").insert(payload)
         : supabase.from("academic_sessions").update(payload).eq("id", body.sessionId ?? "").eq("school_id", schoolId);
@@ -142,21 +153,25 @@ export async function POST(request: NextRequest) {
       if (!body.sessionId || !body.name?.trim() || !body.startsOn || !body.endsOn || !body.termNumber) return jsonError("Academic session, term name, number and dates are required.");
       if (![1, 2, 3].includes(body.termNumber)) return jsonError("Term number must be 1, 2 or 3.");
       if (body.endsOn < body.startsOn) return jsonError("Term end date cannot be before its start date.");
+      if (action === "update_term" && !body.termId) return jsonError("Term is required.");
 
       const { data: session } = await supabase.from("academic_sessions").select("id").eq("id", body.sessionId).eq("school_id", schoolId).maybeSingle();
       if (!session) return jsonError("Academic session does not belong to this school.", 400);
 
       if (body.isCurrent) {
-        const { error } = await supabase
-          .from("terms")
-          .update({ is_current: false, updated_at: new Date().toISOString() })
-          .eq("academic_session_id", body.sessionId)
-          .eq("is_current", true)
-          ...(body.termId ? ["neq", "id", body.termId] as never[] : []);
+        const { error } = await clearOtherCurrentTerms(supabase, body.sessionId, body.termId);
         if (error) return jsonError("Unable to update the current term.", 409);
       }
 
-      const payload = { academic_session_id: body.sessionId, name: body.name.trim(), term_number: body.termNumber, starts_on: body.startsOn, ends_on: body.endsOn, is_current: Boolean(body.isCurrent), updated_at: new Date().toISOString() };
+      const payload = {
+        academic_session_id: body.sessionId,
+        name: body.name.trim(),
+        term_number: body.termNumber,
+        starts_on: body.startsOn,
+        ends_on: body.endsOn,
+        is_current: Boolean(body.isCurrent),
+        updated_at: new Date().toISOString(),
+      };
       const query = action === "create_term"
         ? supabase.from("terms").insert(payload)
         : supabase.from("terms").update(payload).eq("id", body.termId ?? "");
@@ -171,6 +186,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "create_class" || action === "update_class") {
       if (!body.name?.trim()) return jsonError("Class name is required.");
+      if (action === "update_class" && !body.classId) return jsonError("Class is required.");
       const payload = { school_id: schoolId, name: body.name.trim(), level: body.level?.trim() || null, updated_at: new Date().toISOString() };
       const query = action === "create_class"
         ? supabase.from("classes").insert(payload)
@@ -182,6 +198,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "create_subject" || action === "update_subject") {
       if (!body.name?.trim()) return jsonError("Subject name is required.");
+      if (action === "update_subject" && !body.subjectId) return jsonError("Subject is required.");
       const payload = { school_id: schoolId, name: body.name.trim(), code: body.code?.trim().toUpperCase() || null, updated_at: new Date().toISOString() };
       const query = action === "create_subject"
         ? supabase.from("subjects").insert(payload)
