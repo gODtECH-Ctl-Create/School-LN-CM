@@ -1,0 +1,199 @@
+:global(.teacher-lesson-workspace) {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+}
+
+:global(.lesson-list-panel) {
+  padding: 18px;
+  align-self: start;
+  position: sticky;
+  top: 18px;
+}
+
+:global(.lesson-filter-row) {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -4px 0 10px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+:global(.saved-note-list) {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
+}
+
+:global(.saved-note) {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+:global(.saved-note:hover) {
+  background: var(--surface-soft);
+}
+
+:global(.saved-note.is-selected) {
+  border-color: #b8c4e8;
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 3px rgba(49, 87, 213, .07);
+}
+
+:global(.saved-note-title) {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+:global(.saved-note span:not(.saved-note-title)),
+:global(.saved-note small) {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+:global(.lesson-editor-panel) {
+  min-width: 0;
+  padding: 22px;
+}
+
+:global(.lesson-editor-header) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+:global(.lesson-editor-header h2) {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -.03em;
+}
+
+:global(.lesson-editor-header .muted) {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+:global(.lesson-form) {
+  display: grid;
+  gap: 22px;
+}
+
+:global(.lesson-context-section),
+:global(.lesson-body-section) {
+  display: grid;
+  gap: 16px;
+}
+
+:global(.context-inline) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+:global(.context-inline span) {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
+}
+
+:global(.context-inline strong) {
+  color: var(--ink-soft);
+}
+
+:global(.lesson-two-column) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+:global(.field-span-2) {
+  grid-column: span 2;
+}
+
+:global(.lesson-main-textarea) {
+  min-height: 240px !important;
+}
+
+:global(.lesson-form-footer) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+:global(.lesson-form-footer p) {
+  margin: 0;
+  max-width: 600px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+:global(.lesson-editor-panel textarea),
+:global(.lesson-editor-panel select),
+:global(.lesson-editor-panel input[type="number"]),
+:global(.lesson-editor-panel input[type="text"]) {
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  :global(.teacher-lesson-workspace) {
+    grid-template-columns: 1fr;
+  }
+
+  :global(.lesson-list-panel) {
+    position: static;
+  }
+
+  :global(.saved-note-list) {
+    max-height: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  :global(.lesson-list-panel),
+  :global(.lesson-editor-panel) {
+    padding: 16px;
+  }
+
+  :global(.saved-note-list),
+  :global(.lesson-two-column) {
+    grid-template-columns: 1fr;
+  }
+
+  :global(.field-span-2) {
+    grid-column: auto;
+  }
+
+  :global(.lesson-editor-header),
+  :global(.lesson-form-footer) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
