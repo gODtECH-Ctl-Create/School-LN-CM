@@ -39,30 +39,14 @@ body {
 a { color: inherit; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
-  outline: 3px solid rgba(49, 87, 213, 0.22);
-  outline-offset: 2px;
-}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(49, 87, 213, 0.22); outline-offset: 2px; }
 
 .app-frame { min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
-.app-sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 24px 16px 16px;
-  background: var(--surface);
-  border-right: 1px solid var(--line);
-}
+.app-sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 24px; padding: 24px 16px 16px; background: var(--surface); border-right: 1px solid var(--line); }
 .app-brand, .mobile-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
 .app-brand strong, .mobile-brand strong { display: block; font-size: 14px; letter-spacing: -0.01em; }
 .app-brand small { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
-.brand-mark {
-  width: 46px; height: 46px; display: grid; place-items: center;
-  border-radius: 14px; background: var(--ink); color: #fff; font-weight: 800; letter-spacing: -0.05em;
-}
+.brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: var(--ink); color: #fff; font-weight: 800; letter-spacing: -0.05em; }
 .brand-mark-small { width: 38px; height: 38px; border-radius: 11px; font-size: 13px; }
 .school-context { padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-soft); }
 .school-context-label { display: block; color: var(--faint); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
@@ -70,10 +54,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .school-context span:last-child { display: block; color: var(--muted); margin-top: 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
 .app-nav { display: grid; gap: 4px; }
 .nav-label { padding: 0 11px 7px; color: var(--faint); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.nav-item {
-  min-height: 42px; display: flex; align-items: center; gap: 11px; padding: 0 11px;
-  border-radius: 11px; color: var(--ink-soft); text-decoration: none; font-size: 13px; font-weight: 700;
-}
+.nav-item { min-height: 42px; display: flex; align-items: center; gap: 11px; padding: 0 11px; border-radius: 11px; color: var(--ink-soft); text-decoration: none; font-size: 13px; font-weight: 700; }
 .nav-item:hover { background: #f7f8fa; color: var(--ink); }
 .nav-item.is-active { background: var(--primary-soft); color: var(--primary-dark); }
 .nav-item.is-disabled { cursor: default; opacity: .62; }
@@ -82,9 +63,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .coming-pill { margin-left: auto; padding: 4px 7px; border-radius: 999px; background: #f2f4f7; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .sidebar-footer { margin-top: auto; display: grid; gap: 10px; }
 .user-chip { display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--line); }
-.avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font-size: 12px; font-weight: 800; }
+.avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; font-weight: 850; }
+.avatar-soft { background: var(--primary-soft); color: var(--primary-dark); }
 .user-chip strong, .user-chip small { display: block; }
-.user-chip strong { font-size: 12px; }
+.user-chip strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 156px; }
 .user-chip small { margin-top: 2px; color: var(--muted); font-size: 10px; }
 .app-content { min-width: 0; padding: 0 40px 48px; }
 .mobile-topbar { display: none; }
@@ -112,10 +94,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
 .surface { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .stat-card { padding: 19px; }
-.stat-label { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .02em; }
+.stat-label { color: var(--muted); font-size: 11px; font-weight: 800; }
 .stat-value { margin-top: 10px; font-size: 28px; font-weight: 850; letter-spacing: -.035em; }
 .stat-note { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.45; }
-
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .8fr); gap: 16px; margin-top: 16px; }
 .section-card { padding: 20px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
@@ -123,17 +104,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .lesson-list { display: grid; gap: 9px; }
 .lesson-row { display: grid; grid-template-columns: 76px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
-.lesson-time { color: var(--muted); font-size: 11px; font-weight: 800; }
+.lesson-time { color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .08em; }
 .lesson-title { font-size: 13px; font-weight: 800; }
-.lesson-meta { margin-top: 4px; color: var(--muted); font-size: 11px; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.status-ready { background: var(--success); }
-.status-next { background: var(--primary); }
-.status-pending { background: var(--warning); }
-.progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: #eef0f3; }
-.progress-bar { height: 100%; border-radius: inherit; background: var(--primary); }
+.lesson-meta { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .progress-row { display: grid; gap: 7px; margin-bottom: 16px; }
 .progress-label { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-soft); font-size: 11px; font-weight: 750; }
+.progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: #eef0f3; }
+.progress-bar { height: 100%; border-radius: inherit; background: var(--primary); }
 
 .login-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top right, rgba(49,87,213,.08), transparent 35%), var(--canvas); }
 .login-card { width: min(100%, 460px); background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 34px; box-shadow: var(--shadow-md); }
@@ -142,15 +119,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .muted { color: var(--muted); line-height: 1.65; }
 .login-form { display: grid; gap: 17px; margin-top: 26px; }
 .field, .login-form label { display: grid; gap: 7px; color: var(--ink-soft); font-size: 12px; font-weight: 800; }
-.login-form input, .field input, .field select, .assignment-row select {
-  width: 100%; min-height: 44px; border: 1px solid var(--line-strong); border-radius: 11px; padding: 10px 12px; outline: none; background: #fff; color: var(--ink);
-}
+.login-form input, .field input, .field select, .assignment-row select { width: 100%; min-height: 44px; border: 1px solid var(--line-strong); border-radius: 11px; padding: 10px 12px; outline: none; background: #fff; color: var(--ink); }
 .login-form input::placeholder, .field input::placeholder { color: #98a2b3; }
 .login-form input:focus, .field input:focus, .field select:focus, .assignment-row select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(49,87,213,.10); }
 .login-form button { min-height: 46px; border: 0; border-radius: 11px; background: var(--primary); color: #fff; font-weight: 850; }
 .login-form button:hover { background: var(--primary-dark); }
 .login-form button:disabled { opacity: .62; cursor: wait; }
 .login-note { margin: 19px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.login-helper { margin-top: 17px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 3px; color: var(--muted); font-size: 11px; }
+.login-helper strong { color: var(--ink-soft); font-size: 11px; }
 .error, .success { margin: 0; font-size: 12px; line-height: 1.5; }
 .error { color: var(--danger); }
 .success { color: var(--success); }
@@ -161,22 +138,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-wide { width: min(100%, 1080px); margin: 0 auto; padding: 34px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
 .page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
 .page-heading h1 { margin: 0; font-size: 32px; letter-spacing: -.04em; }
-.page-heading .muted { max-width: 650px; margin: 8px 0 0; font-size: 13px; }
+.page-heading .muted { max-width: 680px; margin: 8px 0 0; font-size: 13px; }
 .text-link { color: var(--primary); font-size: 12px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.live-indicator { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.live-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+.staff-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(330px, .95fr); gap: 16px; }
+.form-card { padding: 22px; }
 .staff-form { display: grid; gap: 22px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .assignment-section, .staff-list-section { border-top: 1px solid var(--line); padding-top: 22px; }
 .assignment-section { display: grid; gap: 15px; }
 .button-secondary, .button-danger, .icon-button { min-height: 38px; border-radius: 10px; padding: 0 11px; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .button-secondary { border: 1px solid var(--line-strong); background: #fff; color: var(--ink-soft); }
+.button-secondary:disabled { opacity: .5; cursor: not-allowed; }
 .button-danger { border: 1px solid #f1cbc7; background: var(--danger-soft); color: var(--danger); }
 .icon-button { width: 38px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 20px; }
 .assignment-list, .invitation-list { display: grid; gap: 9px; }
 .assignment-row { display: grid; grid-template-columns: 1fr 1fr 1fr 38px; align-items: center; gap: 8px; padding: 9px; background: #fafbfc; border: 1px solid var(--line); border-radius: 12px; }
-.empty-state { margin: 0; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 15px; background: #fcfcfd; color: var(--muted); font-size: 12px; }
+.empty-state { margin: 0; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 15px; background: #fcfcfd; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.empty-state strong { color: var(--ink-soft); }
 .invitation-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 13px; }
+.invitation-person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.invitation-person > div { min-width: 0; }
 .invitation-card strong { font-size: 13px; }
-.invitation-card p { margin: 4px 0; color: var(--muted); font-size: 11px; }
+.invitation-card p { margin: 4px 0; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
 .invitation-card span { color: var(--muted); font-size: 10px; }
 .invitation-meta { display: flex; align-items: center; gap: 9px; }
 .status { border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 850; text-transform: capitalize; }
@@ -184,23 +169,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status-accepted { background: var(--success-soft); color: var(--success); }
 .status-revoked, .status-expired, .status-failed { background: var(--danger-soft); color: var(--danger); }
 .status-provisioning { background: #f2f4f7; color: var(--muted); }
+.count-badge { min-width: 28px; height: 28px; display: inline-grid; place-items: center; padding: 0 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-dark); font-size: 11px; font-weight: 850; }
+.form-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 4px; }
+.form-footer p { margin: 0; max-width: 360px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 
-.shell { width: 100%; }
-.workspace-quick-action { display: inline-flex; align-items: center; gap: 7px; }
-
-@media (max-width: 980px) {
+@media (max-width: 1080px) {
+  .app-frame { grid-template-columns: 220px minmax(0, 1fr); }
+  .app-content { padding: 0 24px 40px; }
+  .dashboard-grid, .staff-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 820px) {
   .app-frame { grid-template-columns: 1fr; }
   .app-sidebar { display: none; }
-  .app-content { padding: 0 20px 34px; }
+  .app-content { padding: 0 18px 34px; }
   .mobile-topbar { min-height: 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
   .mobile-school-code { color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .1em; }
   .page-wrap { padding-top: 28px; }
-  .dashboard-grid, .grid-3 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 680px) {
-  .app-content { padding: 0 14px 28px; }
-  .hero-row, .page-heading, .section-heading, .invitation-card { flex-direction: column; align-items: stretch; }
+  .hero-row, .page-heading, .section-heading, .invitation-card, .form-footer { flex-direction: column; align-items: stretch; }
   .form-grid, .grid-2 { grid-template-columns: 1fr; }
   .assignment-row { grid-template-columns: 1fr; }
   .assignment-row .icon-button { justify-self: end; }
@@ -210,7 +198,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .invitation-meta { justify-content: space-between; }
   .page-title { font-size: 32px; }
 }
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
