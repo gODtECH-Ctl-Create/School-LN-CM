@@ -2,22 +2,14 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/src/components/app-shell";
 import TeacherLessonsClient, { type LessonWorkspaceData } from "./teacher-lessons-client";
 import { createClient } from "@/src/lib/supabase/server";
-import "./lessons.module.css";
 
-export default async function TeacherLessonsPage() {
+export default async function TeacherLessonsPage({ searchParams }: { searchParams: Promise<{ lesson?: string }> }) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
 
-  const { data: membership } = await supabase
-    .from("school_memberships")
-    .select("id, school_id, role")
-    .eq("user_id", auth.user.id)
-    .eq("is_active", true)
-    .eq("role", "teacher")
-    .limit(1)
-    .maybeSingle();
-
+  const { data: membership } = await supabase.from("school_memberships").select("id, school_id, role").eq("user_id", auth.user.id).eq("is_active", true).eq("role", "teacher").limit(1).maybeSingle();
   if (!membership) redirect("/");
 
   const { data: school } = await supabase.from("schools").select("id, name, code").eq("id", membership.school_id).maybeSingle();
@@ -43,11 +35,10 @@ export default async function TeacherLessonsPage() {
     return curriculum ? [{ ...topic, curriculum_id: curriculum.id, academic_session_id: curriculum.academic_session_id, term_id: curriculum.term_id, class_id: curriculum.class_id, subject_id: curriculum.subject_id }] : [];
   });
 
-  const classIds = [...new Set([...(safeAssignments).map((item) => item.class_id), ...(notes ?? []).map((item) => item.class_id)])];
-  const subjectIds = [...new Set([...(safeAssignments).map((item) => item.subject_id), ...(notes ?? []).map((item) => item.subject_id)])];
-  const sessionIds = [...new Set([...(safeAssignments).map((item) => item.academic_session_id), ...(notes ?? []).map((item) => item.academic_session_id)])];
+  const classIds = [...new Set([...safeAssignments.map((item) => item.class_id), ...(notes ?? []).map((item) => item.class_id)])];
+  const subjectIds = [...new Set([...safeAssignments.map((item) => item.subject_id), ...(notes ?? []).map((item) => item.subject_id)])];
+  const sessionIds = [...new Set([...safeAssignments.map((item) => item.academic_session_id), ...(notes ?? []).map((item) => item.academic_session_id)])];
   const noteTermIds = [...new Set((notes ?? []).map((item) => item.term_id))];
-
   const [{ data: classes }, { data: subjects }, { data: sessions }, { data: terms }] = await Promise.all([
     classIds.length ? supabase.from("classes").select("id, name, level").in("id", classIds).order("name") : Promise.resolve({ data: [] }),
     subjectIds.length ? supabase.from("subjects").select("id, name, code").in("id", subjectIds).order("name") : Promise.resolve({ data: [] }),
@@ -55,20 +46,12 @@ export default async function TeacherLessonsPage() {
     noteTermIds.length ? supabase.from("terms").select("id, academic_session_id, name, term_number, is_current").in("id", noteTermIds) : Promise.resolve({ data: [] }),
   ]);
 
-  const initialData: LessonWorkspaceData = {
-    school,
-    assignments: safeAssignments,
-    classes: classes ?? [],
-    subjects: subjects ?? [],
-    sessions: sessions ?? [],
-    terms: terms ?? [],
-    topics,
-    notes: notes ?? [],
-  };
+  const selectedId = params.lesson && (notes ?? []).some((note) => note.id === params.lesson) ? params.lesson : (notes ?? [])[0]?.id ?? "";
+  const initialData: LessonWorkspaceData = { school, assignments: safeAssignments, classes: classes ?? [], subjects: subjects ?? [], sessions: sessions ?? [], terms: terms ?? [], topics, notes: notes ?? [] };
 
   return (
     <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="lessons">
-      <div className="page-wrap"><TeacherLessonsClient initialData={initialData} /></div>
+      <div className="page-wrap"><TeacherLessonsClient initialData={initialData} initialSelectedId={selectedId} /></div>
     </AppShell>
   );
 }
