@@ -2,7 +2,7 @@
 
 ## Product priority
 
-School LN CM is designed as a mobile application first. Phone is the reference experience. Tablet expands the same interaction model. Desktop is a secondary presentation and must never define the information architecture.
+School LN CM is a mobile application first. Phone is the reference experience. Tablet expands the same interaction model. Desktop is a secondary presentation and must never define the information architecture.
 
 ## Reference sizes
 
