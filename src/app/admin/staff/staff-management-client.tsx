@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
 export type StaffData = {
   schools: { id: string; name: string; code: string }[];
@@ -34,48 +34,24 @@ type Assignment = { classId: string; subjectId: string; academicSessionId: strin
 
 export default function StaffManagementClient({ initialData }: { initialData: StaffData }) {
   const [data, setData] = useState<StaffData>(initialData);
-  const [schoolId] = useState(initialData.school.id);
+  const schoolId = initialData.school.id;
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [changingAccess, setChangingAccess] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function load() {
-    setLoading(true);
-    setError("");
-    const response = await fetch(`/api/staff/invitations?schoolId=${encodeURIComponent(schoolId)}`, { cache: "no-store" });
-    const result = (await response.json()) as StaffData & { error?: string };
-    if (!response.ok) {
-      setError(result.error ?? "Unable to load people.");
-      setLoading(false);
-      return;
-    }
-    setData(result);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    void load();
-    // Initial server data keeps first paint fast; this refreshes after navigation back to the page.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const currentSession = data.sessions.find((session) => session.is_current) ?? data.sessions[0];
+  const pendingInvitations = data.invitations.filter((invitation) => invitation.status === "pending");
 
   function addAssignment() {
     if (!data.classes.length || !data.subjects.length || !currentSession) return;
     setAssignments((current) => [
       ...current,
-      {
-        classId: data.classes[0].id,
-        subjectId: data.subjects[0].id,
-        academicSessionId: currentSession.id,
-      },
+      { classId: data.classes[0].id, subjectId: data.subjects[0].id, academicSessionId: currentSession.id },
     ]);
   }
 
@@ -97,18 +73,31 @@ export default function StaffManagementClient({ initialData }: { initialData: St
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "create", schoolId, firstName, lastName, email, assignments }),
       });
-      const result = (await response.json()) as { error?: string; message?: string; staffCode?: string };
+      const result = (await response.json()) as { error?: string; message?: string; staffCode?: string; invitationId?: string };
       if (!response.ok) {
         setError(result.error ?? "Unable to send invitation.");
         return;
       }
 
+      const invitation = {
+        id: result.invitationId ?? crypto.randomUUID(),
+        email: email.trim().toLowerCase(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        role: "teacher",
+        staff_code: result.staffCode ?? "Generated",
+        status: "pending",
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        accepted_at: null,
+        created_at: new Date().toISOString(),
+      };
+
+      setData((current) => ({ ...current, invitations: [invitation, ...current.invitations] }));
       setFirstName("");
       setLastName("");
       setEmail("");
       setAssignments([]);
       setNotice(`${result.message ?? "Invitation sent."} Staff ID: ${result.staffCode ?? "generated"}.`);
-      await load();
     } catch {
       setError("We couldn't reach the staff service. Try again.");
     } finally {
@@ -130,8 +119,8 @@ export default function StaffManagementClient({ initialData }: { initialData: St
       setError(result.error ?? "Unable to revoke invitation.");
       return;
     }
+    setData((current) => ({ ...current, invitations: current.invitations.map((invitation) => invitation.id === invitationId ? { ...invitation, status: "revoked" } : invitation) }));
     setNotice("Invitation revoked.");
-    await load();
   }
 
   async function setHeadTeacher(teacherMembershipId: string, isHeadTeacher: boolean) {
@@ -194,7 +183,7 @@ export default function StaffManagementClient({ initialData }: { initialData: St
 
             <div className="assignment-section">
               <div className="section-heading">
-                <div><h2>Teaching assignments</h2><p>These use the current academic session automatically.</p></div>
+                <div><h2>Teaching assignments</h2><p>Current session is applied automatically.</p></div>
                 <button type="button" className="button-secondary" onClick={addAssignment} disabled={!data.classes.length || !data.subjects.length || !currentSession}>+ Add assignment</button>
               </div>
               {assignments.length === 0 ? (
@@ -217,15 +206,15 @@ export default function StaffManagementClient({ initialData }: { initialData: St
             </div>
 
             <div className="form-footer">
-              <p>Staff ID is generated automatically. Access starts as Teacher.</p>
-              <button className="btn btn-primary" type="submit" disabled={submitting || loading || !schoolId}>{submitting ? "Sending…" : "Send invitation"}</button>
+              <p>Every new account starts as Teacher. You can promote them later.</p>
+              <button className="btn btn-primary" type="submit" disabled={submitting || !schoolId}>{submitting ? "Sending…" : "Send invitation"}</button>
             </div>
           </form>
         </section>
 
         <section className="surface section-card">
           <div className="section-heading">
-            <div><p className="eyebrow">TEAM</p><h2>Active teachers</h2><p>Everyone starts as a Teacher. Promote a trusted teacher when they need wider oversight.</p></div>
+            <div><p className="eyebrow">TEAM</p><h2>Active teachers</h2><p>Keep the normal teacher experience small. Add wider oversight only when needed.</p></div>
             <span className="count-badge">{data.teachers.length}</span>
           </div>
 
@@ -243,12 +232,7 @@ export default function StaffManagementClient({ initialData }: { initialData: St
                   </div>
                   <div className="invitation-meta">
                     <span className={`status ${teacher.isHeadTeacher ? "status-accepted" : "status-provisioning"}`}>{teacher.isHeadTeacher ? "Head Teacher" : "Teacher"}</span>
-                    <button
-                      type="button"
-                      className="button-secondary"
-                      disabled={changingAccess === teacher.membershipId}
-                      onClick={() => void setHeadTeacher(teacher.membershipId, !teacher.isHeadTeacher)}
-                    >
+                    <button type="button" className="button-secondary" disabled={changingAccess === teacher.membershipId} onClick={() => void setHeadTeacher(teacher.membershipId, !teacher.isHeadTeacher)}>
                       {changingAccess === teacher.membershipId ? "Saving…" : teacher.isHeadTeacher ? "Remove access" : "Make Head Teacher"}
                     </button>
                   </div>
@@ -256,14 +240,14 @@ export default function StaffManagementClient({ initialData }: { initialData: St
               ))}
             </div>
           ) : (
-            <div className="empty-state"><strong>No active teachers yet.</strong><p>Your first teacher will appear here after they complete the invitation flow.</p></div>
+            <div className="empty-state"><strong>No active teachers yet.</strong><p>Your first teacher appears here after they complete the invitation flow.</p></div>
           )}
 
           <div className="assignment-section" style={{ marginTop: 22 }}>
-            <div className="section-heading"><div><h2>Pending invitations</h2><p>Only invitations that still need action are useful here.</p></div><span className="count-badge">{data.invitations.filter((invitation) => invitation.status === "pending").length}</span></div>
-            {data.invitations.filter((invitation) => invitation.status === "pending").length ? (
+            <div className="section-heading"><div><h2>Pending invitations</h2><p>Only invitations that still need action.</p></div><span className="count-badge">{pendingInvitations.length}</span></div>
+            {pendingInvitations.length ? (
               <div className="invitation-list">
-                {data.invitations.filter((invitation) => invitation.status === "pending").map((invitation) => (
+                {pendingInvitations.map((invitation) => (
                   <article className="invitation-card" key={invitation.id}>
                     <div><strong>{invitation.first_name} {invitation.last_name}</strong><p>{invitation.email}</p><span>{invitation.staff_code}</span></div>
                     <button type="button" className="button-danger" onClick={() => void revokeInvitation(invitation.id)}>Revoke</button>
