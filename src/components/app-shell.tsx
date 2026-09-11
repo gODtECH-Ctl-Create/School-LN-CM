@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LogoutButton from "@/src/components/logout-button";
+import RouteScrollReset from "@/src/components/route-scroll-reset";
 
 export type AppRole = "platform_admin" | "school_admin" | "academic_coordinator" | "teacher" | "staff";
 
@@ -97,6 +98,7 @@ export function AppShell({
       </aside>
 
       <main className="app-content">
+        <RouteScrollReset />
         <header className="mobile-topbar">
           <Link href="/" className="mobile-brand" aria-label="School LN CM home">
             <span className="brand-mark brand-mark-small">SL</span>
