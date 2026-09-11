@@ -80,7 +80,7 @@ export default function SignUpPage() {
     const { error: verifyError } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token,
-      type: "signup",
+      type: "email",
     });
 
     setLoading(false);
