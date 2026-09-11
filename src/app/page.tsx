@@ -16,19 +16,7 @@ export default async function HomePage() {
     .limit(1)
     .maybeSingle<{ id: string; school_id: string; role: AppRole; is_head_teacher: boolean }>();
 
-  if (!membership) {
-    return (
-      <main className="login-shell">
-        <section className="login-card">
-          <div className="brand-mark" aria-hidden="true">SL</div>
-          <p className="eyebrow">ACCOUNT</p>
-          <h1>You’re signed in.</h1>
-          <p className="muted">Your account is ready, but it is not attached to an active school workspace yet.</p>
-          <Link className="btn btn-secondary" href="/login">Return to sign in</Link>
-        </section>
-      </main>
-    );
-  }
+  if (!membership) redirect("/onboarding");
 
   const [{ data: school }, { data: profile }, { data: currentSession }] = await Promise.all([
     supabase.from("schools").select("name, code").eq("id", membership.school_id).maybeSingle(),
@@ -95,7 +83,7 @@ export default async function HomePage() {
               </div>
               <div className="empty-state" style={{ minHeight: 142 }}>
                 <strong>Keep it simple.</strong>
-                <p style={{ margin: "6px 0 0" }}>Class → Subject → Term → Units → Topics → Publish.</p>
+                <p style={{ margin: "6px 0 0" }}>Session → Term → Section → Class → Subjects → Weeks.</p>
               </div>
             </article>
           </section>
