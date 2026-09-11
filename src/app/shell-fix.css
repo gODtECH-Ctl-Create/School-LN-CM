@@ -18,7 +18,7 @@ body { overflow: hidden; }
 body:has(.weekSetup .btn-primary:disabled):has(.subjectGrid input:checked) .action-loading-overlay,
 body:has(.saveBar .btn-primary:disabled) .action-loading-overlay,
 body:has(.addSubject input:not(:placeholder-shown)):has(.addSubject .btn-secondary:disabled) .action-loading-overlay,
-body:has(.school-capabilities-card .btn-primary:disabled) .action-loading-overlay { display: grid; }
+body:has(.school-capabilities-card .btn-primary:disabled):has(.capability-option.is-selected) .action-loading-overlay { display: grid; }
 .action-loading-card { min-width: min(100%, 260px); display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.98); box-shadow: var(--shadow-md); }
 .action-spinner { width: 22px; height: 22px; flex: 0 0 22px; border: 2px solid #dbe2f8; border-top-color: var(--primary); border-radius: 50%; animation: action-spin .7s linear infinite; }
 .action-loading-card div { display: grid; gap: 2px; }
