@@ -87,3 +87,7 @@ At tablet widths, use more breathing room and two-column forms when they genuine
 ## Quality bar
 
 A screen is not ready when it merely fits on a phone. It is ready when a teacher can complete the primary task without zooming, hunting for controls, repeating known context, or navigating through unrelated screens.
+
+## Build verification
+
+After every primary UX change, run the production build and verify the phone navigation, page shell, forms, and primary task flow before merging to main.
