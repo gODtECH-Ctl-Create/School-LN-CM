@@ -46,7 +46,7 @@ export default function NavigationClient({ items, mobile = false }: Props) {
 
   return (
     <>
-      {!mobile && isPending && <div className="route-progress" aria-label="Loading page" />}
+      {isPending && <div className="route-progress" aria-label="Loading page" />}
       <div className={mobile ? "mobile-nav-items" : "desktop-nav-items"}>
         {items.map(([key, label, href]) => {
           const active = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
