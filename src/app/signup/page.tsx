@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 
+function getPublicSiteUrl() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
+  return configured || window.location.origin;
+}
+
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -26,7 +31,7 @@ export default function SignUpPage() {
       password,
       options: {
         data: { full_name: name.trim() },
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        emailRedirectTo: `${getPublicSiteUrl()}/auth/callback?next=/onboarding`,
       },
     });
 
@@ -42,7 +47,7 @@ export default function SignUpPage() {
       return;
     }
 
-    setNotice("Check your email to confirm your account. Then sign in and finish your school setup.");
+    setNotice("Check your email to confirm your account. Then you will continue to school setup.");
   }
 
   return (
