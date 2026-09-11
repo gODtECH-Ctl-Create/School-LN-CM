@@ -11,7 +11,7 @@
 .empty-inline { color: var(--faint); font-size: 10px; }
 .class-set-editor { display: grid; gap: 12px; margin-top: 14px; padding-top: 16px; border-top: 1px solid var(--line); }
 .preset-grid, .subject-class-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
-.preset-option { min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; }
+.preset-option { position: relative; min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; }
 .preset-option input { position: absolute; opacity: 0; pointer-events: none; }
 .preset-option.is-selected { border-color: #c8d4ff; background: var(--primary-soft); }
 .preset-option::before { content: ""; width: 18px; height: 18px; flex: 0 0 18px; margin-top: 1px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fff; }
