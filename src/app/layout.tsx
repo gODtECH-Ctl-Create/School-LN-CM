@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ClientDiagnostics from "@/src/components/client-diagnostics";
 import "./globals.css";
 import "./mobile.css";
 import "./mobile-first.css";
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ClientDiagnostics />
+        {children}
+      </body>
     </html>
   );
 }
