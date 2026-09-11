@@ -1,0 +1,69 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/src/lib/supabase/client";
+
+export default function SignUpPage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setLoading(true);
+
+    const supabase = createClient();
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      options: {
+        data: { full_name: name.trim() },
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+      },
+    });
+
+    setLoading(false);
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+
+    if (data.session) {
+      router.replace("/onboarding");
+      router.refresh();
+      return;
+    }
+
+    setNotice("Check your email to confirm your account. Then sign in and finish your school setup.");
+  }
+
+  return (
+    <main className="login-shell">
+      <section className="login-card" aria-labelledby="signup-title">
+        <div className="brand-mark" aria-hidden="true">SL</div>
+        <p className="eyebrow">NEW SCHOOL</p>
+        <h1 id="signup-title">Create your school account.</h1>
+        <p className="muted">One account becomes your school administrator. After sign-up, we will walk you through the setup.</p>
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" autoComplete="name" autoFocus required /></label>
+          <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
+          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required /></label>
+          {error && <p className="error" role="alert">{error}</p>}
+          {notice && <p className="success" role="status">{notice}</p>}
+          <button type="submit" disabled={loading}>{loading ? "Creating…" : "Create account"}</button>
+        </form>
+
+        <p className="login-note"><Link href="/login">Already have an account? Sign in.</Link></p>
+      </section>
+    </main>
+  );
+}
