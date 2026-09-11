@@ -8,21 +8,33 @@ export default async function HomePage() {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
 
-  const { data: membership } = await supabase
+  const { data: memberships } = await supabase
     .from("school_memberships")
-    .select("id, school_id, role, is_head_teacher")
+    .select("id, school_id, role, is_head_teacher, created_at")
     .eq("user_id", auth.user.id)
     .eq("is_active", true)
-    .limit(1)
-    .maybeSingle<{ id: string; school_id: string; role: AppRole; is_head_teacher: boolean }>();
+    .order("created_at", { ascending: true });
 
-  if (!membership) redirect("/onboarding");
+  if (!memberships?.length) redirect("/onboarding");
+
+  // Normal school users belong to one school. When a user later belongs to
+  // more than one tenant, the oldest active membership remains the default
+  // until an explicit school switcher is introduced.
+  const membership = memberships[0] as {
+    id: string;
+    school_id: string;
+    role: AppRole;
+    is_head_teacher: boolean;
+    created_at: string;
+  };
 
   const [{ data: school }, { data: profile }, { data: currentSession }] = await Promise.all([
     supabase.from("schools").select("name, code").eq("id", membership.school_id).maybeSingle(),
     supabase.from("profiles").select("display_name").eq("id", auth.user.id).maybeSingle(),
     supabase.from("academic_sessions").select("name").eq("school_id", membership.school_id).eq("is_current", true).maybeSingle(),
   ]);
+
+  if (!school) redirect("/onboarding");
 
   const isAdmin = membership.role === "school_admin" || membership.role === "platform_admin";
   const isHeadTeacher = !isAdmin && membership.is_head_teacher === true;
@@ -31,8 +43,8 @@ export default async function HomePage() {
   return (
     <AppShell
       role={membership.role}
-      schoolName={school?.name ?? "Your school"}
-      schoolCode={school?.code ?? "SCHOOL"}
+      schoolName={school.name}
+      schoolCode={school.code}
       userName={profile?.display_name ?? auth.user.email ?? undefined}
       isHeadTeacher={isHeadTeacher}
       active="overview"
@@ -48,7 +60,7 @@ export default async function HomePage() {
                 : "Everything you need for teaching is kept close to the lesson you are working on."}
             </p>
             <div className="context-strip">
-              <span className="context-chip"><strong>{school?.code ?? "SCHOOL"}</strong> {school?.name ?? "School"}</span>
+              <span className="context-chip"><strong>{school.code}</strong> {school.name}</span>
               <span className="context-chip">Session <strong>{currentSession?.name ?? "Not configured"}</strong></span>
             </div>
           </div>
