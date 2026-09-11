@@ -1,6 +1,8 @@
 import Link from "next/link";
 import LogoutButton from "@/src/components/logout-button";
 import RouteScrollReset from "@/src/components/route-scroll-reset";
+import NavigationClient from "@/src/components/navigation-client";
+import ActionLoading from "@/src/components/action-loading";
 
 export type AppRole = "platform_admin" | "school_admin" | "academic_coordinator" | "teacher" | "staff";
 
@@ -65,20 +67,7 @@ export function AppShell({
 
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
-          {navigation.map(([key, label, href, mark]) => {
-            const isActive = active === key;
-            return (
-              <Link
-                className={`nav-item ${isActive ? "is-active" : ""}`}
-                href={href}
-                key={key}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <span className="nav-icon" aria-hidden="true">{mark}</span>
-                {label}
-              </Link>
-            );
-          })}
+          <NavigationClient items={navigation} />
         </nav>
 
         <div className="sidebar-footer">
@@ -99,6 +88,7 @@ export function AppShell({
 
       <main className="app-content">
         <RouteScrollReset />
+        <ActionLoading />
         <header className="mobile-topbar">
           <Link href="/" className="mobile-brand" aria-label="School LN CM home">
             <span className="brand-mark brand-mark-small">SL</span>
@@ -116,20 +106,7 @@ export function AppShell({
         {children}
 
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          {navigation.map(([key, label, href, mark]) => {
-            const isActive = active === key;
-            return (
-              <Link
-                className={`mobile-nav-item ${isActive ? "is-active" : ""}`}
-                href={href}
-                key={key}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <span className="mobile-nav-icon" aria-hidden="true">{mark}</span>
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+          <NavigationClient items={navigation} mobile />
         </nav>
       </main>
     </div>
