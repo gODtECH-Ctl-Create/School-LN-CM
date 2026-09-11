@@ -107,8 +107,9 @@ export async function POST(request: NextRequest) {
     }
 
     const sections = new Set(normalizedClasses.map((item) => normalizeSection(item.level)).filter(Boolean));
+    const selectedNames = new Set(requestedSubjects.map((item) => item.name?.trim().toLowerCase()).filter(Boolean));
     const systemSubjects = SUBJECT_CATALOG
-      .filter((subject) => sections.size === 0 || [...sections].some((section) => subject.sections.includes(section)))
+      .filter((subject) => (sections.size === 0 || [...sections].some((section) => subject.sections.includes(section))) && (selectedNames.size === 0 || selectedNames.has(subject.name.toLowerCase())))
       .map((subject) => ({ school_id: school.id, name: subject.name, code: subject.code, is_custom: false }));
     const customSubjects = requestedSubjects
       .filter((item) => item.isCustom === true)
