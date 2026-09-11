@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/src/lib/supabase/server";
 import { createAdminClient } from "@/src/lib/supabase/admin";
-import { SUBJECT_CATALOG } from "@/src/lib/subject-catalog";
+import { SUBJECT_CATALOG, normalizeSection } from "@/src/lib/subject-catalog";
 
 const DEFAULT_TERMS = [
   { number: 1, name: "First Term" },
@@ -65,14 +65,7 @@ export async function POST(request: NextRequest) {
 
     const { data: school, error: schoolError } = await admin
       .from("schools")
-      .insert({
-        name: schoolName,
-        code: schoolCode,
-        email: body.schoolEmail?.trim().toLowerCase() || null,
-        timezone: "Africa/Lagos",
-        currency: "NGN",
-        subscription_status: "trial",
-      })
+      .insert({ name: schoolName, code: schoolCode, email: body.schoolEmail?.trim().toLowerCase() || null, timezone: "Africa/Lagos", currency: "NGN", subscription_status: "trial" })
       .select("id, name, code")
       .single();
     if (schoolError || !school) return jsonError("Unable to create the school.", 500);
@@ -100,14 +93,7 @@ export async function POST(request: NextRequest) {
 
     const terms = DEFAULT_TERMS.map((term) => {
       const dates = makeTermDates(sessionStartsOn, sessionEndsOn, term.number);
-      return {
-        academic_session_id: session.id,
-        name: term.name,
-        term_number: term.number,
-        starts_on: dates.startsOn,
-        ends_on: dates.endsOn,
-        is_current: term.number === currentTerm,
-      };
+      return { academic_session_id: session.id, name: term.name, term_number: term.number, starts_on: dates.startsOn, ends_on: dates.endsOn, is_current: term.number === currentTerm };
     });
     const { error: termsError } = await admin.from("terms").insert(terms);
     if (termsError) throw termsError;
@@ -120,23 +106,16 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
-    const defaultByName = new Map(SUBJECT_CATALOG.map((item) => [item.name.toLowerCase(), item]));
-    const normalizedSubjects = requestedSubjects
-      .map((item) => {
-        const name = item.name?.trim();
-        if (!name) return null;
-        const system = defaultByName.get(name.toLowerCase());
-        return {
-          school_id: school.id,
-          name,
-          code: (item.code?.trim() || system?.code || null)?.toUpperCase() || null,
-          is_custom: item.isCustom === true || !system,
-        };
-      })
-      .filter((item): item is { school_id: string; name: string; code: string | null; is_custom: boolean } => Boolean(item));
-    const dedupedSubjects = [...new Map(normalizedSubjects.map((item) => [item.name.toLowerCase(), item])).values()];
-    if (dedupedSubjects.length) {
-      const { error } = await admin.from("subjects").insert(dedupedSubjects);
+    const selectedNames = new Set(requestedSubjects.map((item) => item.name?.trim().toLowerCase()).filter(Boolean));
+    const sections = new Set(normalizedClasses.map((item) => normalizeSection(item.level)).filter(Boolean));
+    const systemSubjects = SUBJECT_CATALOG.filter((subject) => sections.size === 0 || [...sections].some((section) => subject.sections.includes(section))).map((subject) => ({ school_id: school.id, name: subject.name, code: subject.code, is_custom: false }));
+    const customSubjects = requestedSubjects
+      .filter((item) => item.isCustom === true)
+      .map((item) => ({ school_id: school.id, name: item.name?.trim() ?? "", code: item.code?.trim().toUpperCase() || null, is_custom: true }))
+      .filter((item) => item.name && !selectedNames.has(item.name.toLowerCase()) === false);
+    const subjects = [...new Map([...systemSubjects, ...customSubjects].filter((item) => item.name).map((item) => [item.name.toLowerCase(), item])).values()];
+    if (subjects.length) {
+      const { error } = await admin.from("subjects").insert(subjects);
       if (error) throw error;
     }
 
