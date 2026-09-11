@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/src/lib/supabase/server";
+import { createAdminClient } from "@/src/lib/supabase/admin";
 
 const DEFAULT_TERMS = [
   { number: 1, name: "First Term" },
@@ -61,50 +62,23 @@ export async function POST(request: NextRequest) {
 
     const { data: school, error: schoolError } = await admin
       .from("schools")
-      .insert({
-        name: schoolName,
-        code: schoolCode,
-        email: body.schoolEmail?.trim().toLowerCase() || null,
-        timezone: "Africa/Lagos",
-        currency: "NGN",
-        subscription_status: "trial",
-        capabilities,
-      })
+      .insert({ name: schoolName, code: schoolCode, email: body.schoolEmail?.trim().toLowerCase() || null, timezone: "Africa/Lagos", currency: "NGN", subscription_status: "trial", capabilities })
       .select("id, name, code, capabilities")
       .single();
     if (schoolError || !school) return jsonError("Unable to create the school.", 500);
 
-    const { error: profileError } = await admin.from("profiles").upsert({
-      id: auth.user.id,
-      display_name: auth.user.user_metadata?.full_name ?? auth.user.email ?? "School administrator",
-      updated_at: new Date().toISOString(),
-    });
+    const { error: profileError } = await admin.from("profiles").upsert({ id: auth.user.id, display_name: auth.user.user_metadata?.full_name ?? auth.user.email ?? "School administrator", updated_at: new Date().toISOString() });
     if (profileError) throw profileError;
 
-    const { data: membership, error: membershipError } = await admin
-      .from("school_memberships")
-      .insert({ school_id: school.id, user_id: auth.user.id, role: "school_admin", is_active: true })
-      .select("id")
-      .single();
+    const { data: membership, error: membershipError } = await admin.from("school_memberships").insert({ school_id: school.id, user_id: auth.user.id, role: "school_admin", is_active: true }).select("id").single();
     if (membershipError || !membership) throw membershipError ?? new Error("Unable to create school membership.");
 
-    const { data: session, error: sessionError } = await admin
-      .from("academic_sessions")
-      .insert({ school_id: school.id, name: sessionName, starts_on: sessionStartsOn, ends_on: sessionEndsOn, is_current: true })
-      .select("id")
-      .single();
+    const { data: session, error: sessionError } = await admin.from("academic_sessions").insert({ school_id: school.id, name: sessionName, starts_on: sessionStartsOn, ends_on: sessionEndsOn, is_current: true }).select("id").single();
     if (sessionError || !session) throw sessionError ?? new Error("Unable to create academic session.");
 
     const terms = DEFAULT_TERMS.map((term) => {
       const dates = makeTermDates(sessionStartsOn, sessionEndsOn, term.number);
-      return {
-        academic_session_id: session.id,
-        name: term.name,
-        term_number: term.number,
-        starts_on: dates.startsOn,
-        ends_on: dates.endsOn,
-        is_current: term.number === currentTerm,
-      };
+      return { academic_session_id: session.id, name: term.name, term_number: term.number, starts_on: dates.startsOn, ends_on: dates.endsOn, is_current: term.number === currentTerm };
     });
     const { error: termsError } = await admin.from("terms").insert(terms);
     if (termsError) throw termsError;
