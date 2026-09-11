@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LogoutButton from "@/src/components/logout-button";
 
 export type AppRole = "platform_admin" | "school_admin" | "academic_coordinator" | "teacher" | "staff";
 
@@ -86,11 +87,12 @@ export function AppShell({
           </span>
           <div className="user-chip">
             <span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
-            <span>
+            <span className="user-chip-copy">
               <strong>{displayName}</strong>
               <small>{accessLabel}</small>
             </span>
           </div>
+          <LogoutButton />
         </div>
       </aside>
 
@@ -103,7 +105,10 @@ export function AppShell({
               <small>{accessLabel}</small>
             </span>
           </Link>
-          <span className="mobile-user-name">{displayName}</span>
+          <div className="mobile-account-actions">
+            <span className="mobile-user-name">{displayName}</span>
+            <LogoutButton />
+          </div>
         </header>
 
         {children}
