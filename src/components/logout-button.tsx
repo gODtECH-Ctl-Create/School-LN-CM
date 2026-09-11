@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
+import styles from "./logout-button.module.css";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -22,18 +23,14 @@ export default function LogoutButton() {
 
   return (
     <>
-      <button
-        type="button"
-        className="logout-button"
-        onClick={() => setOpen(true)}
-      >
+      <button type="button" className={styles.logoutButton} onClick={() => setOpen(true)}>
         Log out
       </button>
 
       {open && (
-        <div className="logout-modal-backdrop" role="presentation" onClick={() => !loading && setOpen(false)}>
+        <div className={styles.backdrop} role="presentation" onClick={() => !loading && setOpen(false)}>
           <div
-            className="logout-modal"
+            className={styles.modal}
             role="dialog"
             aria-modal="true"
             aria-labelledby="logout-title"
@@ -45,11 +42,11 @@ export default function LogoutButton() {
             <p id="logout-description" className="muted">
               Are you sure you want to log out of School LN CM?
             </p>
-            <div className="logout-modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)} disabled={loading}>
+            <div className={styles.actions}>
+              <button type="button" className={`${styles.action} ${styles.cancel}`} onClick={() => setOpen(false)} disabled={loading}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-danger" onClick={() => void handleLogout()} disabled={loading}>
+              <button type="button" className={`${styles.action} ${styles.confirm}`} onClick={() => void handleLogout()} disabled={loading}>
                 {loading ? "Logging out…" : "Yes, log out"}
               </button>
             </div>
