@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/src/components/app-shell";
-import CurriculumBuilderClient, { type CurriculumBuilderData } from "./curriculum-builder-client";
+import CurriculumBuilderClient, { type CurriculumBuilderData } from "./curriculum-builder-v2";
 import { createClient } from "@/src/lib/supabase/server";
 
 export default async function CurriculumPage() {
@@ -27,7 +27,7 @@ export default async function CurriculumPage() {
     supabase.from("terms").select("id, academic_session_id, name, term_number, starts_on, ends_on, is_current").order("term_number"),
     supabase.from("classes").select("id, name, level").eq("school_id", school.id).order("name"),
     supabase.from("subjects").select("id, name, code, is_custom").eq("school_id", school.id).order("is_custom").order("name"),
-    supabase.from("curricula").select("id, academic_session_id, term_id, class_id, subject_id, title, description, status, week_count").eq("school_id", school.id).order("updated_at", { ascending: false }),
+    supabase.from("curricula").select("id, academic_session_id, term_id, class_id, subject_id, title, description, status, week_count, topics_per_week").eq("school_id", school.id).order("updated_at", { ascending: false }),
   ]);
 
   const curriculumIds = (curricula ?? []).map((curriculum) => curriculum.id);
@@ -36,7 +36,7 @@ export default async function CurriculumPage() {
     : { data: [] };
   const unitIds = (units ?? []).map((unit) => unit.id);
   const { data: topics } = unitIds.length
-    ? await supabase.from("curriculum_topics").select("id, unit_id, title, summary, week_number").in("unit_id", unitIds).order("sort_order")
+    ? await supabase.from("curriculum_topics").select("id, unit_id, title, summary, week_number, topic_number, sort_order").in("unit_id", unitIds).order("sort_order")
     : { data: [] };
 
   const initialData: CurriculumBuilderData = {
@@ -45,7 +45,7 @@ export default async function CurriculumPage() {
     terms: (terms ?? []).filter((term) => (sessions ?? []).some((session) => session.id === term.academic_session_id)),
     classes: classes ?? [],
     subjects: subjects ?? [],
-    curricula: (curricula ?? []).map((curriculum) => ({ ...curriculum, week_count: curriculum.week_count ?? 10 })),
+    curricula: (curricula ?? []).map((curriculum) => ({ ...curriculum, week_count: curriculum.week_count ?? 10, topics_per_week: curriculum.topics_per_week ?? 1 })),
     units: units ?? [],
     topics: topics ?? [],
   };
