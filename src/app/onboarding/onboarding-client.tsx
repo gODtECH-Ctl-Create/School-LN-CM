@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SUBJECT_CATALOG } from "@/src/lib/subject-catalog";
-import { createClient } from "@/src/lib/supabase/client";
 import "./onboarding.css";
 
 type ClassRow = { name: string; level: string };
@@ -18,7 +17,7 @@ const DEFAULT_SUBJECTS: SubjectRow[] = [
   ...SUBJECT_CATALOG.filter((subject) => ["English Language", "Mathematics", "Basic Science", "Social Studies", "Civic Education", "Computer Studies"].includes(subject.name)).map((subject) => ({ name: subject.name, code: subject.code })),
 ];
 
-export default function OnboardingClient({ displayName, email }: { displayName: string; email: string }) {
+export default function OnboardingClient({ email }: { email: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [schoolName, setSchoolName] = useState("");
