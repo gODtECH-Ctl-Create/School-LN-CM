@@ -17,5 +17,5 @@ export default async function OnboardingPage() {
 
   if (membership) redirect("/");
 
-  return <OnboardingClient displayName={auth.user.user_metadata?.full_name ?? ""} email={auth.user.email ?? ""} />;
+  return <OnboardingClient email={auth.user.email ?? ""} />;
 }
