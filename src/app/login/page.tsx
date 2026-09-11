@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -81,6 +82,10 @@ export default function LoginPage() {
           <span>New teacher?</span>
           <strong>Your school administrator sends your invitation by email.</strong>
         </div>
+
+        <p className="login-note">
+          Setting up a new school? <Link href="/signup">Create a school account.</Link>
+        </p>
 
         <p className="login-note">Your Staff ID is part of your school record. It is not your login credential.</p>
       </section>
