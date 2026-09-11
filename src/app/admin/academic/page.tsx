@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/src/components/app-shell";
-import AcademicSetupClient, { type AcademicData } from "./academic-setup-client";
+import AcademicSetupV2, { type AcademicDataV2 } from "./academic-setup-v2";
 import SchoolCapabilitiesClient from "./school-capabilities-client";
 import "./academic.module.css";
 import { createClient } from "@/src/lib/supabase/server";
@@ -26,13 +26,13 @@ export default async function AcademicSetupPage() {
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: terms } = sessionIds.length ? await supabase.from("terms").select("id, academic_session_id, name, term_number, starts_on, ends_on, is_current").in("academic_session_id", sessionIds).order("term_number") : { data: [] };
 
-  const initialData: AcademicData = { schools: schools ?? [], school, sessions: sessions ?? [], terms: terms ?? [], classes: classes ?? [], subjects: subjects ?? [] };
+  const initialData: AcademicDataV2 = { schools: schools ?? [], school, sessions: sessions ?? [], terms: terms ?? [], classes: classes ?? [], subjects: subjects ?? [] };
 
   return (
     <AppShell role={membership.role} schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="academic">
       <div className="page-wrap">
         <SchoolCapabilitiesClient schoolId={school.id} initialCapabilities={school.capabilities ?? []} />
-        <AcademicSetupClient initialData={initialData} />
+        <AcademicSetupV2 initialData={initialData} />
       </div>
     </AppShell>
   );
