@@ -106,14 +106,15 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
-    const selectedNames = new Set(requestedSubjects.map((item) => item.name?.trim().toLowerCase()).filter(Boolean));
     const sections = new Set(normalizedClasses.map((item) => normalizeSection(item.level)).filter(Boolean));
-    const systemSubjects = SUBJECT_CATALOG.filter((subject) => sections.size === 0 || [...sections].some((section) => subject.sections.includes(section))).map((subject) => ({ school_id: school.id, name: subject.name, code: subject.code, is_custom: false }));
+    const systemSubjects = SUBJECT_CATALOG
+      .filter((subject) => sections.size === 0 || [...sections].some((section) => subject.sections.includes(section)))
+      .map((subject) => ({ school_id: school.id, name: subject.name, code: subject.code, is_custom: false }));
     const customSubjects = requestedSubjects
       .filter((item) => item.isCustom === true)
       .map((item) => ({ school_id: school.id, name: item.name?.trim() ?? "", code: item.code?.trim().toUpperCase() || null, is_custom: true }))
-      .filter((item) => item.name && !selectedNames.has(item.name.toLowerCase()) === false);
-    const subjects = [...new Map([...systemSubjects, ...customSubjects].filter((item) => item.name).map((item) => [item.name.toLowerCase(), item])).values()];
+      .filter((item) => Boolean(item.name));
+    const subjects = [...new Map([...systemSubjects, ...customSubjects].map((item) => [item.name.toLowerCase(), item])).values()];
     if (subjects.length) {
       const { error } = await admin.from("subjects").insert(subjects);
       if (error) throw error;
