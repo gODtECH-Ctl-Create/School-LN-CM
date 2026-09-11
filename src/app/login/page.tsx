@@ -39,11 +39,7 @@ export default function LoginPage() {
         <div className="brand-mark" aria-hidden="true">SL</div>
         <p className="eyebrow">SCHOOL LN CM</p>
         <h1 id="login-title">Welcome back.</h1>
-        <p className="muted">Sign in to continue your school's teaching and curriculum workspace.</p>
-
-        <div className="context-strip">
-          <span className="context-chip"><strong>FSIS</strong> Future Speakers International School</span>
-        </div>
+        <p className="muted">Sign in to continue to your school's teaching and curriculum workspace.</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <label>
