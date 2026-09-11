@@ -96,6 +96,17 @@ export default function CurriculumBuilderClient({ initialData }: { initialData: 
     setWeekCount(plan?.week_count ?? 10);
   }
 
+  function changeWeekCount(nextCount: number) {
+    setWeekCount(nextCount);
+    setWeeks((current) => {
+      const existingByWeek = new Map(current.map((week) => [week.weekNumber, week]));
+      return Array.from({ length: nextCount }, (_, index) => {
+        const weekNumber = index + 1;
+        return existingByWeek.get(weekNumber) ?? { weekNumber, title: "", summary: "" };
+      });
+    });
+  }
+
   function changeSection(nextSection: string) {
     setSection(nextSection);
     const nextClass = data.classes.find((item) => getSection(item.level) === nextSection);
@@ -213,7 +224,7 @@ export default function CurriculumBuilderClient({ initialData }: { initialData: 
 
       <section className={styles.weekSetup}>
         <div className={styles.sectionTop}><div><strong>3. Weekly template</strong><span>Choose once for the selected subject plans.</span></div><span className={styles.count}>{weekCount} weeks</span></div>
-        <div className={styles.weekChoices}>{[8, 9, 10, 11, 12, 13].map((number) => <button type="button" className={weekCount === number ? styles.weekChoiceActive : styles.weekChoice} key={number} onClick={() => setWeekCount(number)}>{number}<small>weeks</small></button>)}</div>
+        <div className={styles.weekChoices}>{[8, 9, 10, 11, 12, 13].map((number) => <button type="button" className={weekCount === number ? styles.weekChoiceActive : styles.weekChoice} key={number} onClick={() => changeWeekCount(number)}>{number}<small>weeks</small></button>)}</div>
         <button className="btn btn-primary" type="button" onClick={() => void createSelectedCurricula()} disabled={busy || !classId || !termId || selectedCount === 0}>Create selected subject{selectedCount === 1 ? "" : "s"} <span aria-hidden="true">→</span></button>
       </section>
 
