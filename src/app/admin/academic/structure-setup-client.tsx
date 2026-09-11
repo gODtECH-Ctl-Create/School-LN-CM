@@ -108,7 +108,8 @@ export default function StructureSetupClient({ schoolId, initialData }: Props) {
     setSubjectClassIds(subject.class_ids);
     setMessage("");
     setError("");
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    const scroller = document.querySelector<HTMLElement>(".app-content");
+    scroller?.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
   }
 
   function startLevelEdit(level: SchoolCapability) {
