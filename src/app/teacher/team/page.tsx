@@ -79,7 +79,7 @@ export default async function TeacherTeamPage() {
               {teacherCards.map((teacher) => (
                 <article className="invitation-card" key={teacher.id}>
                   <div className="invitation-person">
-                    <span className="avatar avatar-soft" aria-hidden="true">{teacher.name.split(" ").map((part) => part.charAt(0)).slice(0, 2).join("")}</span>
+                    <span className="avatar avatar-soft" aria-hidden="true">{teacher.name.split(" ").map((part: string) => part.charAt(0)).slice(0, 2).join("")}</span>
                     <div>
                       <strong>{teacher.name}</strong>
                       <p>{teacher.staffCode}{teacher.is_head_teacher ? " · Head Teacher" : " · Teacher"}</p>
