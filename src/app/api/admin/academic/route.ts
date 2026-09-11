@@ -3,9 +3,30 @@ import { createClient } from "@/src/lib/supabase/server";
 
 const ADMIN_ROLES = ["school_admin", "academic_coordinator", "platform_admin"] as const;
 const ALLOWED_CAPABILITIES = new Set(["preschool", "nursery", "primary", "secondary"]);
-type Action = "update_school_capabilities" | "create_session" | "update_session" | "create_term" | "update_term" | "create_class" | "update_class" | "delete_class" | "create_subject" | "update_subject" | "delete_subject";
+type Action = "update_school_capabilities" | "create_session" | "update_session" | "create_term" | "update_term" | "create_classes" | "create_class" | "update_class" | "delete_class" | "create_subject" | "update_subject" | "delete_subject";
+
+type ClassInput = { name?: string; level?: string };
 
 function jsonError(message: string, status = 400) { return NextResponse.json({ error: message }, { status }); }
+
+function generateSubjectCode(name: string) {
+  const words = name.toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  if (!words.length) return "SUB";
+  if (words.length > 1) return words.map((word) => word[0]).join("").slice(0, 6);
+  return words[0].slice(0, 4);
+}
+
+async function uniqueSubjectCode(supabase: Awaited<ReturnType<typeof createClient>>, schoolId: string, name: string, subjectId?: string) {
+  const base = generateSubjectCode(name);
+  for (let suffix = 0; suffix < 100; suffix += 1) {
+    const code = suffix === 0 ? base : `${base}${suffix + 1}`;
+    let query = supabase.from("subjects").select("id").eq("school_id", schoolId).eq("code", code).limit(1);
+    if (subjectId) query = query.neq("id", subjectId);
+    const { data } = await query.maybeSingle();
+    if (!data) return code;
+  }
+  return `${base}${Date.now().toString().slice(-4)}`;
+}
 
 async function getAdminContext(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: auth, error: authError } = await supabase.auth.getUser();
@@ -57,7 +78,23 @@ export async function POST(request: NextRequest) {
   const context = await getAdminContext(supabase);
   if (!context) return jsonError("You do not have academic setup access.", 403);
   try {
-    const body = (await request.json()) as { action?: Action; schoolId?: string; capabilities?: string[]; sessionId?: string; termId?: string; classId?: string; subjectId?: string; name?: string; code?: string; level?: string; startsOn?: string; endsOn?: string; termNumber?: number; isCurrent?: boolean };
+    const body = (await request.json()) as {
+      action?: Action;
+      schoolId?: string;
+      capabilities?: string[];
+      sessionId?: string;
+      termId?: string;
+      classId?: string;
+      subjectId?: string;
+      name?: string;
+      code?: string;
+      level?: string;
+      classes?: ClassInput[];
+      startsOn?: string;
+      endsOn?: string;
+      termNumber?: number;
+      isCurrent?: boolean;
+    };
     const { action, schoolId } = body;
     if (!action || !schoolId) return jsonError("Action and school are required.");
     if (!canManageSchool(context, schoolId)) return jsonError("You do not have access to that school.", 403);
@@ -95,23 +132,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
-    if (action === "delete_class" || action === "delete_subject") return jsonError("Classes and subjects cannot be deleted once created. Edit the record instead so historical teaching data remains safe.", 409);
+    if (action === "create_classes") {
+      const incoming = Array.isArray(body.classes) ? body.classes : [];
+      if (!incoming.length) return jsonError("Choose at least one class.");
+      const { data: school } = await supabase.from("schools").select("capabilities").eq("id", schoolId).maybeSingle();
+      const capabilities = new Set((school?.capabilities ?? []).filter((item: string) => ALLOWED_CAPABILITIES.has(item)));
+      const normalized = incoming.map((item) => ({ name: item.name?.trim() ?? "", level: item.level?.trim().toLowerCase() ?? "" })).filter((item) => item.name);
+      if (!normalized.length) return jsonError("Enter at least one class.");
+      if (normalized.some((item) => !capabilities.has(item.level))) return jsonError("One or more class levels are not enabled for this school.", 400);
+      const unique = [...new Map(normalized.map((item) => [`${item.name.toLowerCase()}::${item.level}`, item])).values()];
+      const { data: existing } = await supabase.from("classes").select("name, level").eq("school_id", schoolId);
+      const existingKeys = new Set((existing ?? []).map((item) => `${item.name.toLowerCase()}::${(item.level ?? "").toLowerCase()}`));
+      const payload = unique.filter((item) => !existingKeys.has(`${item.name.toLowerCase()}::${item.level}`)).map((item) => ({ school_id: schoolId, name: item.name, level: item.level, updated_at: new Date().toISOString() }));
+      if (payload.length) {
+        const { error } = await supabase.from("classes").insert(payload);
+        if (error) return jsonError(error.code === "23505" ? "One or more selected classes already exist." : "Unable to add classes.", 409);
+      }
+      return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
+    }
 
     if (action === "create_class" || action === "update_class") {
       if (!body.name?.trim()) return jsonError("Class name is required.");
       if (action === "update_class" && !body.classId) return jsonError("Class is required.");
-      const payload = { school_id: schoolId, name: body.name.trim(), level: body.level?.trim() || null, updated_at: new Date().toISOString() };
+      if (body.level && !ALLOWED_CAPABILITIES.has(body.level.trim().toLowerCase())) return jsonError("Invalid class level.");
+      const { data: school } = await supabase.from("schools").select("capabilities").eq("id", schoolId).maybeSingle();
+      if (body.level && !new Set(school?.capabilities ?? []).has(body.level.trim().toLowerCase())) return jsonError("This school capability is not enabled.", 400);
+      const payload = { school_id: schoolId, name: body.name.trim(), level: body.level?.trim().toLowerCase() || null, updated_at: new Date().toISOString() };
       const query = action === "create_class" ? supabase.from("classes").insert(payload) : supabase.from("classes").update(payload).eq("id", body.classId ?? "").eq("school_id", schoolId);
       const { error } = await query; if (error) return jsonError(error.code === "23505" ? "That class already exists." : "Unable to save class.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
+    if (action === "delete_class" || action === "delete_subject") return jsonError("Classes and subjects cannot be deleted once created. Edit the record instead so historical teaching data remains safe.", 409);
+
     if (action === "create_subject" || action === "update_subject") {
       if (!body.name?.trim()) return jsonError("Subject name is required.");
       if (action === "update_subject" && !body.subjectId) return jsonError("Subject is required.");
-      const payload = { school_id: schoolId, name: body.name.trim(), code: body.code?.trim().toUpperCase() || null, updated_at: new Date().toISOString() };
+      const code = await uniqueSubjectCode(supabase, schoolId, body.name.trim(), body.subjectId);
+      const payload = { school_id: schoolId, name: body.name.trim(), code, updated_at: new Date().toISOString() };
       const query = action === "create_subject" ? supabase.from("subjects").insert(payload) : supabase.from("subjects").update(payload).eq("id", body.subjectId ?? "").eq("school_id", schoolId);
-      const { error } = await query; if (error) return jsonError(error.code === "23505" ? "That subject or subject code is already in use." : "Unable to save subject.", 409);
+      const { error } = await query; if (error) return jsonError(error.code === "23505" ? "That subject is already in use." : "Unable to save subject.", 409);
       return NextResponse.json({ ok: true, ...(await loadAcademicData(supabase, schoolId)) });
     }
 
