@@ -5,6 +5,7 @@ import "./mobile.css";
 import "./shell-fix.css";
 import "./viewport-auth-fix.css";
 import "./admin/academic/structure-setup.css";
+import "./mobile-nav-final.css";
 
 export const metadata: Metadata = {
   title: "School LN CM",
