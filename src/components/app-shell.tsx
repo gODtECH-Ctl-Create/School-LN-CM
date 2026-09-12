@@ -37,7 +37,6 @@ export function AppShell({
   schoolCode,
   userName,
   isHeadTeacher = false,
-  active = "overview",
 }: AppShellProps) {
   const isAdmin = role === "school_admin" || role === "platform_admin";
   const navigation = isAdmin
@@ -67,7 +66,7 @@ export function AppShell({
 
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
-          <NavigationClient items={navigation} active={active} />
+          <NavigationClient items={navigation} />
         </nav>
 
         <div className="sidebar-footer">
@@ -106,7 +105,7 @@ export function AppShell({
         {children}
 
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          <NavigationClient items={navigation} mobile active={active} />
+          <NavigationClient items={navigation} mobile />
         </nav>
       </main>
     </div>
