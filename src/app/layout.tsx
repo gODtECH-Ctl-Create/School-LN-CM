@@ -3,6 +3,7 @@ import ClientDiagnostics from "@/src/components/client-diagnostics";
 import "./globals.css";
 import "./mobile.css";
 import "./shell-fix.css";
+import "./viewport-auth-fix.css";
 import "./admin/academic/structure-setup.css";
 
 export const metadata: Metadata = {
