@@ -103,11 +103,11 @@ export function AppShell({
         </header>
 
         {children}
-
-        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          <NavigationClient items={navigation} mobile />
-        </nav>
       </main>
+
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        <NavigationClient items={navigation} mobile />
+      </nav>
     </div>
   );
 }
