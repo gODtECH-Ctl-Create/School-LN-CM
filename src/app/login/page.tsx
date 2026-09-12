@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/src/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +11,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void router.prefetch("/");
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,8 +27,8 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(false);
     if (signInError) {
+      setLoading(false);
       setError("We couldn't sign you in. Check your email and password and try again.");
       return;
     }
@@ -41,7 +45,7 @@ export default function LoginPage() {
         <h1 id="login-title">Welcome back.</h1>
         <p className="muted">Sign in to continue to your school's teaching and curriculum workspace.</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="login-form" aria-busy={loading}>
           <label>
             Email address
             <input
@@ -52,6 +56,7 @@ export default function LoginPage() {
               autoComplete="email"
               autoFocus
               required
+              disabled={loading}
             />
           </label>
 
@@ -64,6 +69,7 @@ export default function LoginPage() {
               placeholder="Your password"
               autoComplete="current-password"
               required
+              disabled={loading}
             />
           </label>
 
@@ -85,6 +91,15 @@ export default function LoginPage() {
 
         <p className="login-note">Your Staff ID is part of your school record. It is not your login credential.</p>
       </section>
+
+      {loading && (
+        <div className="auth-loading" role="status" aria-live="polite">
+          <div className="auth-loading-card">
+            <span className="auth-loading-spinner" aria-hidden="true" />
+            <div><strong>Signing you in</strong><span>Opening your school workspace…</span></div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
