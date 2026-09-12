@@ -8,97 +8,119 @@ export default async function HomePage() {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
 
-  const { data: membership } = await supabase
+  const { data: memberships } = await supabase
     .from("school_memberships")
-    .select("id, school_id, role")
+    .select("id, school_id, role, is_head_teacher, created_at")
     .eq("user_id", auth.user.id)
     .eq("is_active", true)
-    .limit(1)
-    .maybeSingle<{ id: string; school_id: string; role: AppRole }>();
+    .order("created_at", { ascending: true });
 
-  if (!membership) {
-    return (
-      <main className="login-shell">
-        <section className="login-card">
-          <div className="brand-mark" aria-hidden="true">SL</div>
-          <p className="eyebrow">ACCOUNT</p>
-          <h1>You’re signed in.</h1>
-          <p className="muted">Your account does not have an active school membership yet. Ask your school administrator to finish your onboarding.</p>
-          <Link className="btn btn-secondary" href="/login">Return to sign in</Link>
-        </section>
-      </main>
-    );
-  }
+  if (!memberships?.length) redirect("/onboarding");
 
-  const [{ data: school }, { data: profile }, { count: teachers }, { count: pendingInvites }, { data: currentSession }] = await Promise.all([
+  // Normal school users belong to one school. When a user later belongs to
+  // more than one tenant, the oldest active membership remains the default
+  // until an explicit school switcher is introduced.
+  const membership = memberships[0] as {
+    id: string;
+    school_id: string;
+    role: AppRole;
+    is_head_teacher: boolean;
+    created_at: string;
+  };
+
+  const [{ data: school }, { data: profile }, { data: currentSession }] = await Promise.all([
     supabase.from("schools").select("name, code").eq("id", membership.school_id).maybeSingle(),
     supabase.from("profiles").select("display_name").eq("id", auth.user.id).maybeSingle(),
-    supabase.from("school_memberships").select("id", { count: "exact", head: true }).eq("school_id", membership.school_id).eq("role", "teacher").eq("is_active", true),
-    supabase.from("staff_invitations").select("id", { count: "exact", head: true }).eq("school_id", membership.school_id).eq("status", "pending"),
     supabase.from("academic_sessions").select("name").eq("school_id", membership.school_id).eq("is_current", true).maybeSingle(),
   ]);
 
-  const role = membership.role;
-  const isAdmin = role === "school_admin" || role === "platform_admin" || role === "academic_coordinator";
-  const firstName = profile?.display_name?.split(" ")[0] ?? (auth.user.email?.split("@")[0] ?? "there");
+  if (!school) redirect("/onboarding");
+
+  const isAdmin = membership.role === "school_admin" || membership.role === "platform_admin";
+  const isHeadTeacher = !isAdmin && membership.is_head_teacher === true;
+  const firstName = profile?.display_name?.split(" ")[0] ?? auth.user.email?.split("@")[0] ?? "there";
 
   return (
     <AppShell
-      role={role}
-      schoolName={school?.name ?? "Your school"}
-      schoolCode={school?.code ?? "SCHOOL"}
+      role={membership.role}
+      schoolName={school.name}
+      schoolCode={school.code}
       userName={profile?.display_name ?? auth.user.email ?? undefined}
+      isHeadTeacher={isHeadTeacher}
       active="overview"
     >
       <div className="page-wrap">
         <section className="hero-row">
           <div>
-            <p className="eyebrow">{isAdmin ? "SCHOOL OVERVIEW" : "TEACHER WORKSPACE"}</p>
+            <p className="eyebrow">{isAdmin ? "ADMIN HOME" : isHeadTeacher ? "HEAD TEACHER" : "TEACHER HOME"}</p>
             <h1 className="page-title">Good morning, {firstName}.</h1>
-            <p className="page-subtitle">{isAdmin ? "Keep your school's people, academic setup and teaching operations organised from one place." : "Your teaching workspace keeps the class, subject and curriculum context close to the lesson you’re preparing."}</p>
+            <p className="page-subtitle">
+              {isAdmin
+                ? "Run the school from one place. Add people, publish curriculum and keep the teaching setup ready."
+                : "Everything you need for teaching is kept close to the lesson you are working on."}
+            </p>
             <div className="context-strip">
-              <span className="context-chip"><strong>{school?.code ?? "SCHOOL"}</strong> {school?.name ?? "School"}</span>
+              <span className="context-chip"><strong>{school.code}</strong> {school.name}</span>
               <span className="context-chip">Session <strong>{currentSession?.name ?? "Not configured"}</strong></span>
             </div>
           </div>
-          {isAdmin && <Link className="btn btn-primary workspace-quick-action" href="/admin/staff">Add a teacher <span aria-hidden="true">→</span></Link>}
+          <div className="context-strip" style={{ marginTop: 0 }}>
+            {isAdmin ? (
+              <>
+                <Link className="btn btn-primary" href="/admin/staff">Add teacher <span aria-hidden="true">+</span></Link>
+                <Link className="btn btn-secondary" href="/admin/curriculum">Create curriculum</Link>
+              </>
+            ) : (
+              <Link className="btn btn-primary" href="/teacher/lessons">Prepare a lesson <span aria-hidden="true">→</span></Link>
+            )}
+          </div>
         </section>
 
         {isAdmin ? (
-          <>
-            <section className="grid-3" aria-label="School summary">
-              <article className="surface stat-card"><span className="stat-label">Active teachers</span><div className="stat-value">{teachers ?? 0}</div><div className="stat-note">Teachers currently active in this school.</div></article>
-              <article className="surface stat-card"><span className="stat-label">Pending invitations</span><div className="stat-value">{pendingInvites ?? 0}</div><div className="stat-note">Invited teachers who have not completed setup.</div></article>
-              <article className="surface stat-card"><span className="stat-label">Academic session</span><div className="stat-value" style={{ fontSize: 21 }}>{currentSession?.name ?? "Setup needed"}</div><div className="stat-note">Current school session used by academic work.</div></article>
-            </section>
-
-            <section className="dashboard-grid">
-              <article className="surface section-card">
-                <div className="section-heading"><div><h2>Staff operations</h2><p>Invite teachers, attach their teaching assignments and track onboarding.</p></div><Link className="text-link" href="/admin/staff">Open staff</Link></div>
-                <div className="lesson-list">
-                  <div className="lesson-row"><div className="lesson-time">NEXT</div><div><div className="lesson-title">Invite a teacher</div><div className="lesson-meta">Use the teacher’s real email address. The school Staff ID is generated automatically.</div></div><Link className="btn btn-secondary" href="/admin/staff">Start</Link></div>
-                  <div className="lesson-row"><div className="lesson-time">CHECK</div><div><div className="lesson-title">Review invitations</div><div className="lesson-meta">Pending memberships stay inactive until account setup is complete.</div></div><Link className="btn btn-secondary" href="/admin/staff">Review</Link></div>
-                </div>
-              </article>
-              <article className="surface section-card">
-                <div className="section-heading"><div><h2>Academic setup</h2><p>Get the teaching context ready before curriculum work begins.</p></div></div>
-                <div className="progress-row"><div className="progress-label"><span>Foundation</span><strong>In progress</strong></div><div className="progress-track"><div className="progress-bar" style={{ width: "42%" }} /></div></div>
-                <p className="muted" style={{ fontSize: 12, margin: 0 }}>School, staff and session foundations are available. Curriculum and lesson workflows are the next product layer.</p>
-              </article>
-            </section>
-          </>
+          <section className="dashboard-grid" style={{ marginTop: 6 }}>
+            <article className="surface section-card">
+              <div className="section-heading">
+                <div><p className="eyebrow">PEOPLE</p><h2>Manage your teaching team</h2><p>Invite teachers, assign their classes and subjects, and control who has wider oversight.</p></div>
+                <Link className="text-link" href="/admin/staff">Open people</Link>
+              </div>
+              <div className="lesson-list">
+                <div className="lesson-row"><div className="lesson-time">01</div><div><div className="lesson-title">Add a teacher</div><div className="lesson-meta">Use the teacher’s real email. Their account is activated from the invitation.</div></div><Link className="btn btn-secondary" href="/admin/staff">Add</Link></div>
+                <div className="lesson-row"><div className="lesson-time">02</div><div><div className="lesson-title">Assign teaching work</div><div className="lesson-meta">Give each teacher the class and subject context they need.</div></div><Link className="btn btn-secondary" href="/admin/staff">Assign</Link></div>
+              </div>
+            </article>
+            <article className="surface section-card">
+              <div className="section-heading">
+                <div><p className="eyebrow">CURRICULUM</p><h2>Build the teaching path</h2><p>Create the curriculum once, then let teachers use it directly when preparing lessons.</p></div>
+                <Link className="text-link" href="/admin/curriculum">Open curriculum</Link>
+              </div>
+              <div className="empty-state" style={{ minHeight: 142 }}>
+                <strong>Keep it simple.</strong>
+                <p style={{ margin: "6px 0 0" }}>Session → Term → Section → Class → Subjects → Weeks.</p>
+              </div>
+            </article>
+          </section>
         ) : (
-          <>
-            <section className="grid-3" aria-label="Teacher workspace summary">
-              <article className="surface stat-card"><span className="stat-label">Today’s lessons</span><div className="stat-value">0</div><div className="stat-note">No lesson schedule has been connected yet.</div></article>
-              <article className="surface stat-card"><span className="stat-label">Preparation</span><div className="stat-value">0%</div><div className="stat-note">Preparation tracking begins with your lesson workflow.</div></article>
-              <article className="surface stat-card"><span className="stat-label">Current session</span><div className="stat-value" style={{ fontSize: 21 }}>{currentSession?.name ?? "Setup needed"}</div><div className="stat-note">Academic context for your teaching work.</div></article>
-            </section>
-            <section className="dashboard-grid">
-              <article className="surface section-card"><div className="section-heading"><div><h2>Today’s teaching plan</h2><p>Your next lessons will appear here once the academic schedule is connected.</p></div></div><div className="empty-state">No lessons are scheduled for this workspace yet. Once classes, subjects and curriculum planning are connected, this becomes your daily teaching queue.</div></article>
-              <article className="surface section-card"><div className="section-heading"><div><h2>Lesson preparation</h2><p>Keep the lesson context visible from planning to delivery.</p></div></div><div className="context-strip" style={{ marginTop: 0 }}><span className="context-chip">Class <strong>Not assigned</strong></span><span className="context-chip">Subject <strong>Not assigned</strong></span><span className="context-chip">Week <strong>Not assigned</strong></span></div><p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>Your workspace is ready for the next curriculum and lesson-note layer.</p></article>
-            </section>
-          </>
+          <section className="dashboard-grid" style={{ marginTop: 6 }}>
+            <article className="surface section-card">
+              <div className="section-heading">
+                <div><p className="eyebrow">NEXT</p><h2>Your lesson workspace</h2><p>Start from your assigned teaching context and build the note without repeating school setup details.</p></div>
+                <Link className="text-link" href="/teacher/lessons">Open lessons</Link>
+              </div>
+              <div className="lesson-list">
+                <div className="lesson-row"><div className="lesson-time">START</div><div><div className="lesson-title">Prepare your next lesson</div><div className="lesson-meta">Choose a topic, generate what you need, edit it, then save the finished lesson note.</div></div><Link className="btn btn-secondary" href="/teacher/lessons">Prepare</Link></div>
+                <div className="lesson-row"><div className="lesson-time">USE</div><div><div className="lesson-title">Open your curriculum</div><div className="lesson-meta">Pick a published topic and move straight into lesson preparation.</div></div><Link className="btn btn-secondary" href="/teacher/curriculum">Browse</Link></div>
+              </div>
+            </article>
+            <article className="surface section-card">
+              <div className="section-heading">
+                <div><p className="eyebrow">YOUR ACCESS</p><h2>{isHeadTeacher ? "Head Teacher" : "Teacher"}</h2><p>{isHeadTeacher ? "You have the normal teacher workspace plus a Team area for monitoring other teachers." : "Your workspace stays focused on your own classes, curriculum and lessons."}</p></div>
+              </div>
+              <div className="context-strip" style={{ marginTop: 0 }}>
+                <span className="context-chip">Role <strong>{isHeadTeacher ? "Head Teacher" : "Teacher"}</strong></span>
+                {isHeadTeacher && <Link className="btn btn-secondary" href="/teacher/team">Open Team</Link>}
+              </div>
+            </article>
+          </section>
         )}
       </div>
     </AppShell>

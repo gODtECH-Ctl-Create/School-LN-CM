@@ -10,7 +10,7 @@ export default async function TeacherCurriculumPage() {
 
   const { data: membership } = await supabase
     .from("school_memberships")
-    .select("id, school_id, role")
+    .select("id, school_id, role, is_head_teacher")
     .eq("user_id", auth.user.id)
     .eq("is_active", true)
     .eq("role", "teacher")
@@ -50,7 +50,7 @@ export default async function TeacherCurriculumPage() {
   ]);
 
   return (
-    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="curriculum">
+    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} isHeadTeacher={membership.is_head_teacher === true} active="curriculum">
       <div className="page-wrap">
         <TeacherCurriculumClient
           data={{ school, curricula: assignedCurricula, units: units ?? [], topics: topics ?? [], classes: classes ?? [], subjects: subjects ?? [], sessions: sessions ?? [], terms: terms ?? [] }}

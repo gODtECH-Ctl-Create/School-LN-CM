@@ -9,7 +9,7 @@ export default async function TeacherLessonsPage({ searchParams }: { searchParam
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
 
-  const { data: membership } = await supabase.from("school_memberships").select("id, school_id, role").eq("user_id", auth.user.id).eq("is_active", true).eq("role", "teacher").limit(1).maybeSingle();
+  const { data: membership } = await supabase.from("school_memberships").select("id, school_id, role, is_head_teacher").eq("user_id", auth.user.id).eq("is_active", true).eq("role", "teacher").limit(1).maybeSingle();
   if (!membership) redirect("/");
 
   const { data: school } = await supabase.from("schools").select("id, name, code").eq("id", membership.school_id).maybeSingle();
@@ -58,7 +58,7 @@ export default async function TeacherLessonsPage({ searchParams }: { searchParam
   };
 
   return (
-    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="lessons">
+    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} isHeadTeacher={membership.is_head_teacher === true} active="lessons">
       <div className="page-wrap"><TeacherLessonsClient initialData={initialData} /></div>
     </AppShell>
   );
