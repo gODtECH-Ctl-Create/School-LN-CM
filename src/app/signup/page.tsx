@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
@@ -18,6 +18,10 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void router.prefetch("/onboarding");
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,10 +63,10 @@ export default function SignUpPage() {
         <h1 id="signup-title">Create your school account.</h1>
         <p className="muted">One account becomes your school administrator. After sign-up, we’ll confirm your email and then take you through school setup.</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" autoComplete="name" autoFocus required /></label>
-          <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
-          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required /></label>
+        <form onSubmit={handleSubmit} className="login-form" aria-busy={loading}>
+          <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" autoComplete="name" autoFocus required disabled={loading} /></label>
+          <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required disabled={loading} /></label>
+          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required disabled={loading} /></label>
           {error && <p className="error" role="alert">{error}</p>}
           {notice && <p className="success" role="status">{notice}</p>}
           <button type="submit" disabled={loading}>{loading ? "Creating…" : "Create account"}</button>
@@ -70,6 +74,15 @@ export default function SignUpPage() {
 
         <p className="login-note"><Link href="/login">Already have an account? Sign in.</Link></p>
       </section>
+
+      {loading && (
+        <div className="auth-loading" role="status" aria-live="polite">
+          <div className="auth-loading-card">
+            <span className="auth-loading-spinner" aria-hidden="true" />
+            <div><strong>Creating your account</strong><span>Preparing your school setup…</span></div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
