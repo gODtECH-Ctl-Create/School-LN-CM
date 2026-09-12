@@ -17,17 +17,17 @@ type AppShellProps = {
 };
 
 const adminNavigation = [
-  ["overview", "Home", "/", "H"],
-  ["staff", "People", "/admin/staff", "P"],
-  ["curriculum", "Curriculum", "/admin/curriculum", "C"],
-  ["academic", "Setup", "/admin/academic", "S"],
+  ["overview", "Home", "/"],
+  ["staff", "People", "/admin/staff"],
+  ["curriculum", "Curriculum", "/admin/curriculum"],
+  ["academic", "Setup", "/admin/academic"],
 ] as const;
 
 const teacherNavigation = [
-  ["overview", "Today", "/", "T"],
-  ["lessons", "Lessons", "/teacher/lessons", "L"],
-  ["curriculum", "Curriculum", "/teacher/curriculum", "C"],
-  ["library", "Library", "/teacher/library", "B"],
+  ["overview", "Today", "/"],
+  ["lessons", "Lessons", "/teacher/lessons"],
+  ["curriculum", "Curriculum", "/teacher/curriculum"],
+  ["library", "Library", "/teacher/library"],
 ] as const;
 
 export function AppShell({
@@ -43,7 +43,7 @@ export function AppShell({
   const navigation = isAdmin
     ? adminNavigation
     : isHeadTeacher
-      ? [...teacherNavigation, ["team", "Team", "/teacher/team", "T"] as const]
+      ? [...teacherNavigation, ["team", "Team", "/teacher/team"] as const]
       : teacherNavigation;
   const displayName = userName?.trim() || (isAdmin ? "School administrator" : "Teacher");
   const accessLabel = isAdmin ? "Admin" : isHeadTeacher ? "Head Teacher" : "Teacher";
@@ -67,7 +67,7 @@ export function AppShell({
 
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
-          <NavigationClient items={navigation} />
+          <NavigationClient items={navigation} active={active} />
         </nav>
 
         <div className="sidebar-footer">
@@ -106,7 +106,7 @@ export function AppShell({
         {children}
 
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          <NavigationClient items={navigation} mobile />
+          <NavigationClient items={navigation} mobile active={active} />
         </nav>
       </main>
     </div>
