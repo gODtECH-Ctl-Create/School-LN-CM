@@ -1,0 +1,86 @@
+html, body { height: 100%; }
+body { overflow: hidden; }
+.app-frame { position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); overflow: hidden; }
+.app-sidebar { position: relative; top: auto; height: 100dvh; min-height: 0; overflow: hidden; }
+.app-content { min-width: 0; min-height: 0; height: 100dvh; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 0 40px 48px; }
+.page-wrap { min-height: 100%; }
+
+.desktop-nav-items { display: grid; gap: 4px; }
+.nav-item { transition: background 160ms ease, color 160ms ease, transform 160ms ease; }
+.nav-item.is-active { transform: scale(1.02); transform-origin: left center; }
+.nav-item.is-navigating { pointer-events: none; opacity: .75; }
+.nav-icon svg { display: block; }
+
+.route-progress { position: fixed; inset: 0 0 auto 0; z-index: 200; height: 3px; background: linear-gradient(90deg, var(--primary), #7c9af7, var(--primary)); background-size: 200% 100%; animation: route-progress 1s linear infinite; box-shadow: 0 1px 8px rgba(49,87,213,.22); }
+@keyframes route-progress { from { background-position: 0 0; } to { background-position: 200% 0; } }
+
+.action-loading-overlay { display: none; position: fixed; inset: 0; z-index: 180; place-items: center; padding: 20px; background: rgba(245,247,251,.42); backdrop-filter: blur(2px); pointer-events: auto; }
+body:has(.weekSetup .btn-primary:disabled):has(.subjectGrid input:checked) .action-loading-overlay,
+body:has(.saveBar .btn-primary:disabled) .action-loading-overlay,
+body:has(.addSubject input:not(:placeholder-shown)):has(.addSubject .btn-secondary:disabled) .action-loading-overlay,
+body:has(.school-capabilities-card .btn-primary:disabled):has(.capability-option.is-selected) .action-loading-overlay { display: grid; }
+.action-loading-card { min-width: min(100%, 260px); display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.98); box-shadow: var(--shadow-md); }
+.action-spinner { width: 22px; height: 22px; flex: 0 0 22px; border: 2px solid #dbe2f8; border-top-color: var(--primary); border-radius: 50%; animation: action-spin .7s linear infinite; }
+.action-loading-card div { display: grid; gap: 2px; }
+.action-loading-card strong { font-size: 12px; }
+.action-loading-card span { color: var(--muted); font-size: 10px; }
+@keyframes action-spin { to { transform: rotate(360deg); } }
+
+body:has([role="status"]) [role="status"] { position: fixed; left: 50%; top: 50%; z-index: 170; transform: translate(-50%, -50%); margin: 0; min-width: 180px; max-width: min(90vw, 360px); padding: 10px 14px; border: 1px solid #cce8d8; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: var(--shadow-md); text-align: center; color: var(--success); font-size: 11px; font-weight: 800; animation: status-pop .5s ease forwards; pointer-events: none; }
+@keyframes status-pop { 0% { opacity: 0; transform: translate(-50%, -46%) scale(.96); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 65% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.98); } }
+
+@media (max-width: 900px) {
+  .app-frame { display: block; }
+  .app-sidebar { display: none; }
+  .app-content { width: 100%; height: 100dvh; padding: 0 14px calc(88px + env(safe-area-inset-bottom)); }
+  .page-wrap { padding-top: 68px; }
+  .mobile-topbar { position: fixed; inset: 0 0 auto 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 8px 14px; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--line); box-shadow: 0 4px 18px rgba(16,24,40,.06); backdrop-filter: blur(12px); }
+  .mobile-brand { min-width: 0; gap: 8px; }
+  .mobile-brand .brand-mark-small { width: 32px; height: 32px; border-radius: 9px; font-size: 11px; }
+  .mobile-brand-copy { min-width: 0; display: grid; gap: 1px; }
+  .mobile-brand-copy strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+  .mobile-brand-copy small { color: var(--muted); font-size: 8px; font-weight: 750; }
+  .mobile-account-actions { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .mobile-user-name { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 9px; font-weight: 750; }
+  .mobile-account-actions .logout-button { min-height: 34px; padding: 0 9px; }
+  .mobile-bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: grid; min-height: 64px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.98); box-shadow: 0 -6px 22px rgba(16,24,40,.08); backdrop-filter: blur(14px); }
+  .mobile-nav-items { display: contents; }
+  .mobile-nav-item { min-width: 0; min-height: 52px; display: grid; place-items: center; align-content: center; gap: 3px; border-radius: 11px; color: var(--muted); text-decoration: none; font-size: 8px; font-weight: 800; transition: transform 160ms ease, background 160ms ease, color 160ms ease; }
+  .mobile-nav-item.is-active { color: var(--primary-dark); background: var(--primary-soft); transform: scale(1.06); z-index: 1; }
+  .mobile-nav-item.is-navigating { pointer-events: none; opacity: .7; }
+  .mobile-nav-icon { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 7px; font-size: 9px; font-weight: 850; }
+  .mobile-nav-icon svg { width: 21px; height: 21px; display: block; }
+  .mobile-nav-item.is-active .mobile-nav-icon { transform: scale(1.03); }
+}
+
+@media (min-width: 901px) {
+  .app-sidebar { border-right: 1px solid var(--line); box-shadow: 8px 0 24px rgba(16,24,40,.03); }
+  .app-content { scrollbar-gutter: stable; }
+  .mobile-bottom-nav { display: none !important; }
+}
+
+.school-capabilities-card { margin-bottom: 16px; }
+.capability-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+.capability-option { min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); text-align: left; }
+.capability-option.is-selected { border-color: #c8d4ff; background: var(--primary-soft); }
+.capability-check { width: 20px; height: 20px; flex: 0 0 20px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 6px; color: #fff; font-size: 11px; font-weight: 900; }
+.capability-option.is-selected .capability-check { border-color: var(--primary); background: var(--primary); }
+.capability-option span:last-child { min-width: 0; display: grid; gap: 3px; }
+.capability-option strong { font-size: 11px; }
+.capability-option small { color: var(--muted); font-size: 9px; line-height: 1.35; }
+.school-capabilities-card > .btn { margin-top: 12px; }
+
+@media (max-width: 680px) {
+  .capability-grid { grid-template-columns: 1fr 1fr; }
+  .school-capabilities-card { padding: 14px; }
+  .school-capabilities-card > .btn { width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .app-content { padding-inline: 10px; }
+  .mobile-topbar { padding-inline: 10px; }
+  .mobile-user-name { display: none; }
+  .mobile-bottom-nav { padding-inline: 4px; }
+  .mobile-nav-item { font-size: 7px; }
+  .mobile-nav-icon { width: 21px; height: 21px; }
+}

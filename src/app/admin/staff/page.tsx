@@ -19,15 +19,26 @@ export default async function StaffManagementPage() {
 
   if (!membership) redirect("/");
 
-  const { data: schools } = await supabase.from("schools").select("id, name, code").eq("id", membership.school_id).order("name");
+  const { data: schools } = await supabase
+    .from("schools")
+    .select("id, name, code")
+    .eq("id", membership.school_id)
+    .order("name");
   if (!schools?.length) redirect("/");
 
   const school = schools[0];
-  const [{ data: classes }, { data: subjects }, { data: sessions }, { data: invitations }] = await Promise.all([
+  const [{ data: classes }, { data: subjects }, { data: sessions }, { data: invitations }, { data: teacherMemberships }] = await Promise.all([
     supabase.from("classes").select("id, name, level").eq("school_id", school.id).order("name"),
     supabase.from("subjects").select("id, name, code").eq("school_id", school.id).order("name"),
     supabase.from("academic_sessions").select("id, name, is_current").eq("school_id", school.id).order("starts_on", { ascending: false }),
     supabase.from("staff_invitations").select("id, email, first_name, last_name, role, staff_code, status, expires_at, accepted_at, created_at").eq("school_id", school.id).order("created_at", { ascending: false }),
+    supabase.from("school_memberships").select("id, is_head_teacher").eq("school_id", school.id).eq("role", "teacher").eq("is_active", true).order("created_at", { ascending: true }),
+  ]);
+
+  const teacherIds = (teacherMemberships ?? []).map((teacher) => teacher.id);
+  const [{ data: staffProfiles }, { data: assignments }] = await Promise.all([
+    teacherIds.length ? supabase.from("staff_profiles").select("membership_id, first_name, last_name, staff_code").in("membership_id", teacherIds) : Promise.resolve({ data: [] }),
+    teacherIds.length ? supabase.from("teacher_assignments").select("membership_id, class_id, subject_id, academic_session_id").in("membership_id", teacherIds) : Promise.resolve({ data: [] }),
   ]);
 
   const initialData: StaffData = {
@@ -37,6 +48,17 @@ export default async function StaffManagementPage() {
     subjects: subjects ?? [],
     sessions: sessions ?? [],
     invitations: invitations ?? [],
+    teachers: (teacherMemberships ?? []).map((teacher) => {
+      const profile = (staffProfiles ?? []).find((item) => item.membership_id === teacher.id);
+      return {
+        membershipId: teacher.id,
+        firstName: profile?.first_name ?? "Teacher",
+        lastName: profile?.last_name ?? "",
+        staffCode: profile?.staff_code ?? "",
+        isHeadTeacher: teacher.is_head_teacher,
+        assignments: (assignments ?? []).filter((assignment) => assignment.membership_id === teacher.id).length,
+      };
+    }),
   };
 
   return (

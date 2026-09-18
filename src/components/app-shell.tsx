@@ -1,4 +1,8 @@
 import Link from "next/link";
+import LogoutButton from "@/src/components/logout-button";
+import RouteScrollReset from "@/src/components/route-scroll-reset";
+import NavigationClient from "@/src/components/navigation-client";
+import ActionLoading from "@/src/components/action-loading";
 
 export type AppRole = "platform_admin" | "school_admin" | "academic_coordinator" | "teacher" | "staff";
 
@@ -8,56 +12,102 @@ type AppShellProps = {
   schoolName: string;
   schoolCode: string;
   userName?: string;
-  active?: "overview" | "staff" | "academic" | "curriculum" | "lessons" | "library" | "settings";
+  isHeadTeacher?: boolean;
+  active?: "overview" | "staff" | "academic" | "curriculum" | "lessons" | "library" | "team" | "settings";
 };
 
 const adminNavigation = [
-  ["overview", "Overview", "/", "O"],
-  ["staff", "Staff", "/admin/staff", "S"],
-  ["academic", "Academic setup", "/admin/academic", "A"],
-  ["curriculum", "Curriculum", "/admin/curriculum", "C"],
+  ["overview", "Home", "/"],
+  ["staff", "People", "/admin/staff"],
+  ["curriculum", "Curriculum", "/admin/curriculum"],
+  ["academic", "Setup", "/admin/academic"],
 ] as const;
 
 const teacherNavigation = [
-  ["overview", "Today", "/", "T"],
-  ["lessons", "My lessons", "/teacher/lessons", "L"],
-  ["curriculum", "Curriculum", "/teacher/curriculum", "C"],
-  ["library", "Lesson library", "/teacher/library", "B"],
+  ["overview", "Today", "/"],
+  ["lessons", "Lessons", "/teacher/lessons"],
+  ["curriculum", "Curriculum", "/teacher/curriculum"],
+  ["library", "Library", "/teacher/library"],
 ] as const;
 
-export function AppShell({ children, role, schoolName, schoolCode, userName, active = "overview" }: AppShellProps) {
-  const isAdmin = role === "school_admin" || role === "platform_admin" || role === "academic_coordinator";
-  const navigation = isAdmin ? adminNavigation : teacherNavigation;
+export function AppShell({
+  children,
+  role,
+  schoolName,
+  schoolCode,
+  userName,
+  isHeadTeacher = false,
+}: AppShellProps) {
+  const isAdmin = role === "school_admin" || role === "platform_admin";
+  const navigation = isAdmin
+    ? adminNavigation
+    : isHeadTeacher
+      ? [...teacherNavigation, ["team", "Team", "/teacher/team"] as const]
+      : teacherNavigation;
   const displayName = userName?.trim() || (isAdmin ? "School administrator" : "Teacher");
+  const accessLabel = isAdmin ? "Admin" : isHeadTeacher ? "Head Teacher" : "Teacher";
 
   return (
     <div className="app-frame">
       <aside className="app-sidebar">
         <Link href="/" className="app-brand" aria-label="School LN CM home">
           <span className="brand-mark brand-mark-small">SL</span>
-          <span><strong>School LN CM</strong><small>Learning & curriculum</small></span>
+          <span>
+            <strong>School LN CM</strong>
+            <small>Learning & curriculum</small>
+          </span>
         </Link>
-        <div className="school-context"><span className="school-context-label">School</span><strong>{schoolName}</strong><span>{schoolCode}</span></div>
+
+        <div className="school-context">
+          <span className="school-context-label">School</span>
+          <strong>{schoolName}</strong>
+          <span>{schoolCode}</span>
+        </div>
+
         <nav className="app-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
-          {navigation.map(([key, label, href, mark]) => {
-            const isActive = active === key;
-            return (
-              <Link className={`nav-item ${isActive ? "is-active" : ""}`} href={href} key={key}>
-                <span className="nav-icon" aria-hidden="true">{mark}</span>{label}
-              </Link>
-            );
-          })}
+          <NavigationClient items={navigation} />
         </nav>
+
         <div className="sidebar-footer">
-          <span className="nav-item is-disabled" aria-disabled="true"><span className="nav-icon" aria-hidden="true">?</span>Help & support</span>
-          <div className="user-chip"><span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span><span><strong>{displayName}</strong><small>{isAdmin ? "Administrator" : "Teacher"}</small></span></div>
+          <span className="nav-item is-disabled" aria-disabled="true">
+            <span className="nav-icon" aria-hidden="true">?</span>
+            Help & support
+          </span>
+          <div className="user-chip">
+            <span className="avatar" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
+            <span className="user-chip-copy">
+              <strong>{displayName}</strong>
+              <small>{accessLabel}</small>
+            </span>
+          </div>
+          <LogoutButton />
         </div>
       </aside>
+
       <main className="app-content">
-        <header className="mobile-topbar"><Link href="/" className="mobile-brand"><span className="brand-mark brand-mark-small">SL</span><strong>School LN CM</strong></Link><span className="mobile-school-code">{schoolCode}</span></header>
+        <RouteScrollReset />
+        <ActionLoading />
+        <header className="mobile-topbar">
+          <Link href="/" className="mobile-brand" aria-label="School LN CM home">
+            <span className="brand-mark brand-mark-small">SL</span>
+            <span className="mobile-brand-copy">
+              <strong>{schoolCode}</strong>
+              <small>{accessLabel}</small>
+            </span>
+          </Link>
+          <div className="mobile-account-actions">
+            <span className="mobile-user-name">{displayName}</span>
+            <LogoutButton />
+          </div>
+        </header>
+
         {children}
       </main>
+
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        <NavigationClient items={navigation} mobile />
+      </nav>
     </div>
   );
 }

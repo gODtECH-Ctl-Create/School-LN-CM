@@ -21,7 +21,7 @@ export default async function TeacherLibraryPage({ searchParams }: { searchParam
 
   const { data: membership } = await supabase
     .from("school_memberships")
-    .select("id, school_id, role")
+    .select("id, school_id, role, is_head_teacher")
     .eq("user_id", auth.user.id)
     .eq("is_active", true)
     .eq("role", "teacher")
@@ -57,21 +57,21 @@ export default async function TeacherLibraryPage({ searchParams }: { searchParam
   const termMap = new Map((terms ?? []).map((item) => [item.id, item.name]));
 
   return (
-    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} active="library">
+    <AppShell role="teacher" schoolName={school.name} schoolCode={school.code} userName={auth.user.user_metadata?.full_name ?? auth.user.email ?? undefined} isHeadTeacher={membership.is_head_teacher === true} active="library">
       <div className="page-wrap">
         <section className="page-heading">
           <div>
-            <p className="eyebrow">LESSON LIBRARY</p>
-            <h1>Everything you’ve prepared, in one place.</h1>
-            <p className="muted">Search your lesson notes, reopen a draft, or reuse a published note as the starting point for your next teaching session.</p>
+            <p className="eyebrow">LIBRARY</p>
+            <h1>Your saved lessons.</h1>
+            <p className="muted">Find a lesson you already prepared, reopen a draft, or use a published note as a starting point.</p>
             <div className="context-strip"><span className="context-chip"><strong>{school.code}</strong> {school.name}</span><span className="context-chip">Saved notes <strong>{allNotes.length}</strong></span></div>
           </div>
-          <Link className="btn btn-primary" href="/teacher/lessons">Create lesson note <span aria-hidden="true">+</span></Link>
+          <Link className="btn btn-primary" href="/teacher/lessons">Create lesson <span aria-hidden="true">+</span></Link>
         </section>
 
         <section className="surface library-toolbar">
           <form action="/teacher/library" method="get" className="library-search">
-            <label className="field">Search lesson notes<input type="search" name="q" defaultValue={params.q ?? ""} placeholder="Search by lesson title or content" /></label>
+            <label className="field">Search<input type="search" name="q" defaultValue={params.q ?? ""} placeholder="Search your lessons" /></label>
             <button className="btn btn-secondary" type="submit">Search</button>
           </form>
           {query && <p className="library-result-note">Showing {filteredNotes.length} result{filteredNotes.length === 1 ? "" : "s"} for <strong>“{params.q}”</strong>.</p>}
@@ -82,10 +82,10 @@ export default async function TeacherLibraryPage({ searchParams }: { searchParam
             <article className="surface library-card" key={note.id}>
               <header className="library-card-header"><div><p className="eyebrow">{termMap.get(note.term_id) ?? "Term"} · {sessionMap.get(note.academic_session_id) ?? "Session"}</p><h2>{note.title}</h2></div><span className={`status ${statusClass(note.status)}`}>{note.status}</span></header>
               <div className="library-context"><span>{classMap.get(note.class_id) ?? "Class"}</span><span>{subjectMap.get(note.subject_id) ?? "Subject"}</span><span>{note.duration_minutes} min</span></div>
-              <p className="library-preview">{note.lesson_content?.trim() || note.learning_objectives?.trim() || "This lesson note has not been filled out yet."}</p>
-              <footer className="library-card-footer"><span>Updated {formatUpdated(note.updated_at)}</span><Link className="btn btn-secondary" href={`/teacher/lessons?lesson=${encodeURIComponent(note.id)}`}>Open note</Link></footer>
+              <p className="library-preview">{note.lesson_content?.trim() || note.learning_objectives?.trim() || "This lesson is still waiting for content."}</p>
+              <footer className="library-card-footer"><span>Updated {formatUpdated(note.updated_at)}</span><Link className="btn btn-secondary" href={`/teacher/lessons?lesson=${encodeURIComponent(note.id)}`}>Open lesson</Link></footer>
             </article>
-          )) : <div className="surface library-empty"><div className="editor-mark">L</div><p className="eyebrow">LESSON LIBRARY</p><h2>{query ? "No notes match that search." : "Your lesson library is empty."}</h2><p className="muted">{query ? "Try another phrase or search by the main teaching topic." : "Create your first lesson note from an assigned class and subject. Saved notes will appear here automatically."}</p><Link className="btn btn-primary" href="/teacher/lessons">Create your first lesson</Link></div>}
+          )) : <div className="surface library-empty"><div className="editor-mark">L</div><p className="eyebrow">LIBRARY</p><h2>{query ? "No lessons match that search." : "Your lesson library is empty."}</h2><p className="muted">{query ? "Try another phrase or search by the main teaching topic." : "Create your first lesson from an assigned class and subject. It will be saved here automatically."}</p><Link className="btn btn-primary" href="/teacher/lessons">Create your first lesson</Link></div>}
         </section>
       </div>
     </AppShell>

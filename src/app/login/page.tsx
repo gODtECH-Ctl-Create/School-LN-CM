@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/src/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +11,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void router.prefetch("/");
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,14 +27,13 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(false);
     if (signInError) {
+      setLoading(false);
       setError("We couldn't sign you in. Check your email and password and try again.");
       return;
     }
 
     router.replace("/");
-    router.refresh();
   }
 
   return (
@@ -38,13 +42,9 @@ export default function LoginPage() {
         <div className="brand-mark" aria-hidden="true">SL</div>
         <p className="eyebrow">SCHOOL LN CM</p>
         <h1 id="login-title">Welcome back.</h1>
-        <p className="muted">Sign in to continue your school's teaching and curriculum workspace.</p>
+        <p className="muted">Sign in to continue to your school's teaching and curriculum workspace.</p>
 
-        <div className="context-strip">
-          <span className="context-chip"><strong>FSIS</strong> Future Speakers International School</span>
-        </div>
-
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="login-form" aria-busy={loading}>
           <label>
             Email address
             <input
@@ -55,6 +55,7 @@ export default function LoginPage() {
               autoComplete="email"
               autoFocus
               required
+              disabled={loading}
             />
           </label>
 
@@ -67,6 +68,7 @@ export default function LoginPage() {
               placeholder="Your password"
               autoComplete="current-password"
               required
+              disabled={loading}
             />
           </label>
 
@@ -82,8 +84,21 @@ export default function LoginPage() {
           <strong>Your school administrator sends your invitation by email.</strong>
         </div>
 
+        <p className="login-note">
+          Setting up a new school? <Link href="/signup">Create a school account.</Link>
+        </p>
+
         <p className="login-note">Your Staff ID is part of your school record. It is not your login credential.</p>
       </section>
+
+      {loading && (
+        <div className="auth-loading" role="status" aria-live="polite">
+          <div className="auth-loading-card">
+            <span className="auth-loading-spinner" aria-hidden="true" />
+            <div><strong>Signing you in</strong><span>Opening your school workspace…</span></div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
