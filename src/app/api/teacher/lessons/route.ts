@@ -214,13 +214,20 @@ export async function POST(request: NextRequest) {
     let curriculumUnitId = body.curriculumUnitId ?? null;
 
     if (body.curriculumTopicId) {
-      const { data: topic } = await supabase.from("curriculum_topics").select("id, unit_id, curriculum_id").eq("id", body.curriculumTopicId).maybeSingle();
+      const { data: topic } = await supabase.from("curriculum_topics").select("id, unit_id").eq("id", body.curriculumTopicId).maybeSingle();
       if (!topic) return jsonError("Selected curriculum topic was not found.", 400);
+
+      const { data: unit } = await supabase
+        .from("curriculum_units")
+        .select("id, curriculum_id")
+        .eq("id", topic.unit_id)
+        .maybeSingle();
+      if (!unit) return jsonError("Selected curriculum topic is not attached to a curriculum.", 400);
 
       const { data: curriculum } = await supabase
         .from("curricula")
         .select("id, school_id, academic_session_id, term_id, class_id, subject_id, status")
-        .eq("id", topic.curriculum_id)
+        .eq("id", unit.curriculum_id)
         .eq("school_id", membership.school_id)
         .maybeSingle();
       if (!curriculum || curriculum.status !== "published") return jsonError("Only a published curriculum topic can be linked to a lesson.", 400);

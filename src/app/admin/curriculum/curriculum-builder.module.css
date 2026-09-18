@@ -7,7 +7,7 @@
 .alertError, .alertSuccess { padding: 10px 11px; margin-bottom: 10px; border-radius: 10px; font-size: 11px; line-height: 1.4; }
 .alertError { border: 1px solid #f1cbc7; background: var(--danger-soft); color: var(--danger); }
 .alertSuccess { border: 1px solid #bde7ce; background: var(--success-soft); color: var(--success); }
-.contextCard, .subjectCard, .weekSetup, .editorCard, .emptyEditor { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); padding: 14px; margin-top: 10px; }
+.contextCard, .subjectCard, .weekSetup, .importCard, .editorCard, .emptyEditor { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); padding: 14px; margin-top: 10px; }
 .sectionTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .sectionTop > div { display: grid; gap: 3px; }
 .sectionTop strong { font-size: 13px; }
@@ -103,3 +103,11 @@
   .saveBar .btn { min-width: 126px; }
   .editorCard { padding-bottom: 76px; }
 }
+
+.importActions { display: grid; gap: 9px; margin-top: 12px; }
+.fileButton { width: fit-content; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 10px; background: #fff; color: var(--ink); font-size: 10px; font-weight: 850; cursor: pointer; }
+.fileButton:hover { background: var(--surface-soft); }
+.fileButton input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+.replaceOption { display: flex; align-items: flex-start; gap: 8px; color: var(--ink-soft); font-size: 9px; line-height: 1.45; }
+.replaceOption input { width: 15px; height: 15px; margin: 0; accent-color: var(--primary); flex: 0 0 auto; }
+.importHint { margin: 9px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
