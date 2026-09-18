@@ -149,14 +149,22 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (!weeklyUnit) {
+        const { data: lastUnit } = await supabase
+          .from("curriculum_units")
+          .select("unit_number")
+          .eq("curriculum_id", curriculumId)
+          .order("unit_number", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const unitNumber = (lastUnit?.unit_number ?? 0) + 1;
         const { data: createdUnit, error } = await supabase
           .from("curriculum_units")
           .insert({
             curriculum_id: curriculumId,
-            unit_number: 1,
+            unit_number: unitNumber,
             title: "Weekly plan",
             summary: "Imported week-by-week teaching plan",
-            sort_order: 1,
+            sort_order: unitNumber,
             updated_at: now,
           })
           .select("id")
