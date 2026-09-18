@@ -6,13 +6,6 @@ const CAPABILITIES = ["preschool", "nursery", "primary", "secondary"] as const;
 
 type Capability = (typeof CAPABILITIES)[number];
 
-const LEVEL_CLASS_MAP: Record<Capability, string[]> = {
-  preschool: ["Preschool 1", "Preschool 2"],
-  nursery: ["Nursery 1", "Nursery 2", "Nursery 3", "Nursery 4"],
-  primary: ["Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"],
-  secondary: ["JSS 1", "JSS 2", "JSS 3", "SS 1", "SS 2", "SS 3"],
-};
-
 function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
@@ -89,7 +82,6 @@ export async function POST(request: NextRequest) {
     if (!names.length) return errorResponse("Select at least one class for this level.");
 
     const { data: existing } = await supabase.from("classes").select("id, name").eq("school_id", schoolId).eq("level", level);
-    const selected = new Set(names.map((name) => name.toLowerCase()));
     const { error: deactivateError } = await supabase
       .from("classes")
       .update({ is_active: false, updated_at: new Date().toISOString() })

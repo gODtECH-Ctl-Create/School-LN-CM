@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SCHOOL_CAPABILITIES, type SchoolCapability } from "@/src/lib/school-capabilities";
 
 const CLASS_PRESETS: Record<SchoolCapability, string[]> = {
@@ -37,11 +37,6 @@ export default function StructureSetupClient({ schoolId, initialData }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!activeLevel) return;
-    setSelectedClasses(data.classes.filter((item) => item.level === activeLevel).map((item) => item.name));
-  }, [activeLevel, data.classes]);
 
   const currentClassGroups = useMemo(
     () => capabilities.map((level) => ({

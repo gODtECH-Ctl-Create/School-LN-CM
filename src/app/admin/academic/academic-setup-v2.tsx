@@ -71,11 +71,6 @@ export default function AcademicSetupV2({ initialData }: { initialData: Academic
     [data.sessions, data.terms],
   );
 
-  const levelOptions = useMemo(
-    () => capabilities.flatMap((level) => CLASS_PRESETS[level].map((name) => ({ name, level }))),
-    [capabilities],
-  );
-
   function resetMessages() { setError(""); setNotice(""); }
 
   async function submit(action: string, body: Record<string, unknown>, success: string) {
