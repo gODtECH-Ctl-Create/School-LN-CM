@@ -1,0 +1,9 @@
+project:
+  state: active
+  priority: high
+  current_focus: "Academic and school-management foundation"
+  next_step: "Continue the curriculum-driven lesson-planning and school workflow after the current admin/teacher foundation"
+  blockers:
+    - []
+  status_note: "FSIS is the first pilot; tenant isolation and role-aware UX are foundational."
+  last_worked_on: "2026-10-04"
